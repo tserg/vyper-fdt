@@ -189,20 +189,6 @@ def withdrawableFundsOf(_receiver: address) -> uint256:
     return self.accumulativeFundsOf(_receiver) - self.withdrawnFunds[_receiver]
 
 @internal
-def _updateFundsBalance() -> uint256:
-
-    _previousFundsBalance: uint256 = self.balance
-
-    if _previousFundsBalance > self.balance:
-        return _previousFundsBalance - self.balance
-
-    elif self.balance > _previousFundsBalance:
-        return self.balance - _previousFundsBalance
-
-    else:
-        return 0
-
-@internal
 def _distributeFunds(_triggerer: address, _value: uint256):
     """
     @dev Distribute funds which have not been distributed
@@ -211,7 +197,7 @@ def _distributeFunds(_triggerer: address, _value: uint256):
     assert self.total_supply > 0
 
     if _value > 0:
-        self.pointsPerShare += _value 
+        self.pointsPerShare += _value / self.total_supply
 
         log FundsDistributed(_triggerer, _value)
 
@@ -231,17 +217,9 @@ def _prepareWithdraw(_receiver: address) -> uint256:
 @external
 def withdrawFunds():
 
-    _newFunds: uint256 = self._updateFundsBalance()
-
-    if _newFunds > 0:
-
-        self._distributeFunds(msg.sender, _newFunds)
-
     _withdrawableFunds: uint256 = self._prepareWithdraw(msg.sender)
 
     send(msg.sender, _withdrawableFunds)
-
-
 
 @view
 @external
