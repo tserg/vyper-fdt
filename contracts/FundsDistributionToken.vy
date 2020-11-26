@@ -1,3 +1,5 @@
+# @version ^0.2.0
+
 # @dev Implementation of ERC-20 token standard.
 # @author Takayuki Jimba (@yudetamago)
 # https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
@@ -16,9 +18,19 @@ event Approval:
     spender: indexed(address)
     value: uint256
 
+event FundsDistributed:
+    receiver: indexed(address)
+    value: uint256
+
+event FundsWithdrawn:
+    receiver: indexed(address)
+    value: uint256
+
 name: public(String[64])
 symbol: public(String[32])
 decimals: public(uint256)
+
+pointsPerShare: uint256
 
 # NOTE: By declaring `balanceOf` as public, vyper automatically generates a 'balanceOf()' getter
 #       method to allow access to account balances.
@@ -29,6 +41,10 @@ allowances: HashMap[address, HashMap[address, uint256]]
 total_supply: uint256
 minter: address
 
+withdrawnFunds: HashMap[address, uint256]
+pointsCorrection: HashMap[address, uint256]
+
+# ERC20 functions
 
 @external
 def __init__(_name: String[64], _symbol: String[32], _decimals: uint256, _supply: uint256):
@@ -161,3 +177,90 @@ def burnFrom(_to: address, _value: uint256):
     """
     self.allowances[_to][msg.sender] -= _value
     self._burn(_to, _value)
+
+# FDT functions
+
+@internal
+def accumulativeFundsOf(_receiver: address) -> uint256:
+    return self.pointsPerShare * self.balanceOf[_receiver] + self.pointsCorrection[_receiver]
+
+@internal
+def withdrawableFundsOf(_receiver: address) -> uint256:
+    return self.accumulativeFundsOf(_receiver) - self.withdrawnFunds[_receiver]
+
+@internal
+def _updateFundsBalance() -> uint256:
+
+    _previousFundsBalance: uint256 = self.balance
+
+    if _previousFundsBalance > self.balance:
+        return _previousFundsBalance - self.balance
+
+    elif self.balance > _previousFundsBalance:
+        return self.balance - _previousFundsBalance
+
+    else:
+        return 0
+
+@internal
+def _distributeFunds(_triggerer: address, _value: uint256):
+    """
+    @dev Distribute funds which have not been distributed
+    @param _value The amount that will be distributed
+    """
+    assert self.total_supply > 0
+
+    if _value > 0:
+        self.pointsPerShare += _value 
+
+        log FundsDistributed(_triggerer, _value)
+
+
+@internal
+def _prepareWithdraw(_receiver: address) -> uint256:
+    
+    _withdrawableDividend: uint256 = self.withdrawableFundsOf(_receiver)
+
+    self.withdrawnFunds[_receiver] = self.withdrawnFunds[_receiver] + _withdrawableDividend
+
+    log FundsWithdrawn(_receiver, _withdrawableDividend)
+
+    return _withdrawableDividend
+
+
+@external
+def withdrawFunds():
+
+    _newFunds: uint256 = self._updateFundsBalance()
+
+    if _newFunds > 0:
+
+        self._distributeFunds(msg.sender, _newFunds)
+
+    _withdrawableFunds: uint256 = self._prepareWithdraw(msg.sender)
+
+    send(msg.sender, _withdrawableFunds)
+
+
+
+@view
+@external
+def withdrawnFundsOf(_receiver: address) -> uint256:
+    return self.withdrawnFunds[_receiver]
+
+@external
+@payable
+def payToContract():
+    
+    self._distributeFunds(msg.sender, msg.value)
+
+@external
+@view
+def getPointsPerShare() -> uint256:
+    return self.pointsPerShare
+
+
+@external
+@view
+def getContractBalance() -> uint256:
+    return self.balance
