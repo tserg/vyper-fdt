@@ -6,13 +6,14 @@ import React, { useState } from 'react';
 import Web3 from 'web3';
 
 const web3 = new Web3(Web3.givenProvider);
-const contractAddr = '0xEE97EA62EeDe2e522B967C14d7de0a363f6c9341';
+const contractAddr = '';
 const FDTContract = new web3.eth.Contract(FDT_Abi, contractAddr);
 
 function App() {
 
   const [getCurrentWallet, setGetCurrentWallet] = useState('0x00');
   const [getTotalSupply, setGetTotalSupply] = useState('0');
+  const [getCurrentWalletTokenBalance, setGetCurrentWalletTokenBalance] = useState('0');
   const [payAmount, setPayAmount] = useState(0);
   const [getContractBalance, setGetContractBalance] = useState(0);
 
@@ -26,12 +27,10 @@ function App() {
 
   const handleGetTotalSupply = async (e) => {
     e.preventDefault();
-    const result = web3.utils.fromWei(await FDTContract.methods.totalSupply().call());
+    const result = await FDTContract.methods.totalSupply().call();
     setGetTotalSupply(result);
     console.log(result);
   }
-
-
 
   const handlePay = async (e) => {
     e.preventDefault();
@@ -50,6 +49,23 @@ function App() {
     console.log(result);
   }
 
+  const handleWithdrawFunds = async (e) => {
+    e.preventDefault();
+    const accounts = await window.ethereum.enable();
+    const account = accounts[0];
+    const result = await FDTContract.methods.withdrawFunds().send({from: account});
+    console.log(result);
+  }
+
+  const handleGetCurrentWalletTokenBalance = async (e) => {
+    e.preventDefault();
+    const accounts = await window.ethereum.enable();
+    const account = accounts[0];
+    const result = await FDTContract.methods.balanceOf(account).call();
+    setGetCurrentWalletTokenBalance(result);
+    console.log(result);
+
+  }
 
   return (
     <div className="App">
@@ -64,6 +80,7 @@ function App() {
           Current Wallet: &nbsp;
           { getCurrentWallet }
         </p>
+
         <button
           onClick={handleGetTotalSupply}
           type="button" > 
@@ -71,6 +88,15 @@ function App() {
         </button>
         <p>Total Supply: &nbsp;
         { getTotalSupply }
+        </p>
+
+        <button
+          onClick={handleGetCurrentWalletTokenBalance}
+          type="button" > 
+          Get Current Wallet Token Balance
+        </button>
+        <p>Number of tokens in current wallet: &nbsp;
+        { getCurrentWalletTokenBalance }
         </p>
 
         <button
@@ -83,6 +109,7 @@ function App() {
         </p>
 
         <form onSubmit={handlePay}>
+          <p>
           <label>
             Pay to Contract:
             <input 
@@ -92,8 +119,14 @@ function App() {
               onChange={ e => setPayAmount(e.target.value) } />
           </label>
           <input type="submit" value="Pay" />
+          </p>
         </form>
 
+        <button
+          onClick={handleWithdrawFunds}
+          type="button" >
+          Withdraw Funds
+        </button>
 
       </header>
     </div>
