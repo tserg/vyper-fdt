@@ -41,6 +41,8 @@ allowances: HashMap[address, HashMap[address, uint256]]
 total_supply: uint256
 minter: address
 
+fundsBalance: uint256
+
 withdrawnFunds: HashMap[address, uint256]
 pointsCorrection: HashMap[address, uint256]
 
@@ -54,6 +56,7 @@ def __init__(_name: String[64], _symbol: String[32], _decimals: uint256, _supply
     self.balanceOf[msg.sender] = _supply
     self.total_supply = _supply
     self.minter = msg.sender
+    self.fundsBalance = 0
     log Transfer(ZERO_ADDRESS, msg.sender, _supply)
 
 
@@ -200,6 +203,20 @@ def _distributeFunds(_triggerer: address, _value: uint256):
 
         log FundsDistributed(_triggerer, _value)
 
+@internal
+def _updateFundsBalance() -> uint256:
+    
+    _prevFundsBalance: uint256 = self.fundsBalance
+
+    self.fundsBalance = self.balance
+
+    if _prevFundsBalance > self.fundsBalance:
+        return _prevFundsBalance - self.fundsBalance
+    elif self.fundsBalance > _prevFundsBalance:
+        return self.fundsBalance - _prevFundsBalance
+    else:
+        return 0
+
 
 @internal
 def _prepareWithdraw(_receiver: address) -> uint256:
@@ -212,9 +229,13 @@ def _prepareWithdraw(_receiver: address) -> uint256:
 
     return _withdrawableDividend
 
-
 @external
 def withdrawFunds():
+
+    _newFunds: uint256 = self._updateFundsBalance()
+
+    if _newFunds > 0:
+        self._distributeFunds(msg.sender, _newFunds)
 
     _withdrawableFunds: uint256 = self._prepareWithdraw(msg.sender)
 
@@ -229,7 +250,7 @@ def withdrawnFundsOf(_receiver: address) -> uint256:
 @payable
 def payToContract():
     
-    self._distributeFunds(msg.sender, msg.value)
+    pass
 
 @external
 @view

@@ -6,7 +6,7 @@ import React, { useState } from 'react';
 import Web3 from 'web3';
 
 const web3 = new Web3(Web3.givenProvider);
-const contractAddr = '';
+const contractAddr = '0x6B0000Fa80ef063Bd5fA54764C9F69545Fc45F33';
 const FDTContract = new web3.eth.Contract(FDT_Abi, contractAddr);
 
 function App() {
