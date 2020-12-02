@@ -19,13 +19,72 @@ def test_initial_state(FDT_contract, accounts):
 
 def test_same_IO(FDT_contract, accounts):
 
-	tx2 = FDT_contract.payToContract({'from': accounts[0], 'amount': 1e18})
+	"""
+		Address with 100 tokens pays to contract, and withdraws
+	"""
+
+	tx1 = FDT_contract.payToContract({'from': accounts[0], 'amount': 1e18})
 
 	assert FDT_contract.balance() == 1e18
 
-	tx1 = FDT_contract.withdrawFunds({'from': accounts[0]})
+	account_balance = accounts[0].balance()
 
-	assert len(tx1.events) == 2
-	assert tx1.events['FundsDistributed']['receiver'] == accounts[0]
-	assert tx1.events['FundsWithdrawn']['receiver'] == accounts[0]
+	tx2 = FDT_contract.withdrawFunds({'from': accounts[0]})
+
+	assert len(tx2.events) == 2
+	assert tx2.events['FundsDistributed']['receiver'] == accounts[0]
+	assert tx2.events['FundsWithdrawn']['receiver'] == accounts[0]
 	assert FDT_contract.balance() == 0
+	assert accounts[0].balance() == account_balance + 1e18
+
+def test_different_IO_single_deposit(FDT_contract, accounts):
+
+	"""
+		Non-token holding address pays to contract, address with 100 tokens withdraws
+	"""
+	tx1 = FDT_contract.payToContract({'from': accounts[1], 'amount': 1e18})
+
+	assert FDT_contract.balance() == 1e18
+
+	account_balance = accounts[0].balance()
+
+	tx2 = FDT_contract.withdrawFunds({'from': accounts[0]})
+
+	assert len(tx2.events) == 2
+	assert tx2.events['FundsDistributed']['receiver'] == accounts[0]
+	assert tx2.events['FundsWithdrawn']['receiver'] == accounts[0]
+	assert FDT_contract.balance() == 0
+	assert accounts[0].balance() == account_balance + 1e18
+
+def test_two_token_holders_single_deposit(FDT_contract, accounts):
+
+	"""
+		Two address with 50 tokens each, withdraws
+	"""
+
+	tx1 = FDT_contract.transfer(accounts[1], 50, {'from': accounts[0]})
+
+	assert len(tx1.events) == 1
+
+	tx2 = FDT_contract.payToContract({'from': accounts[1], 'amount': 1e18})
+
+	assert FDT_contract.balance() == 1e18
+
+	account_balance = accounts[0].balance()
+
+	tx3 = FDT_contract.withdrawFunds({'from': accounts[0]})
+
+	assert len(tx3.events) == 2
+	assert tx3.events['FundsDistributed']['receiver'] == accounts[0]
+	assert tx3.events['FundsWithdrawn']['receiver'] == accounts[0]
+	assert FDT_contract.balance() == 5e17
+	assert accounts[0].balance() == account_balance + 5e17
+
+	account_balance = accounts[1].balance()
+
+	tx4 = FDT_contract.withdrawFunds({'from': accounts[1]})
+
+	assert len(tx4.events) == 1
+	assert tx4.events['FundsWithdrawn']['receiver'] == accounts[1]
+	assert FDT_contract.balance() == 0
+	assert accounts[1].balance() == account_balance + 5e17

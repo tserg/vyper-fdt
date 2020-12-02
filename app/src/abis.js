@@ -111,7 +111,8 @@ export const FDT_Abi = [
       "inputs": [],
       "stateMutability": "view",
       "type": "function",
-      "gas": 1151
+      "gas": 1151,
+      "constant": true
     },
     {
       "name": "allowance",
@@ -133,7 +134,8 @@ export const FDT_Abi = [
       ],
       "stateMutability": "view",
       "type": "function",
-      "gas": 1611
+      "gas": 1611,
+      "constant": true
     },
     {
       "name": "transfer",
@@ -155,7 +157,7 @@ export const FDT_Abi = [
       ],
       "stateMutability": "nonpayable",
       "type": "function",
-      "gas": 74833
+      "gas": 148489
     },
     {
       "name": "transferFrom",
@@ -258,7 +260,7 @@ export const FDT_Abi = [
       "inputs": [],
       "stateMutability": "nonpayable",
       "type": "function",
-      "gas": 93105
+      "gas": 193899
     },
     {
       "name": "withdrawnFundsOf",
@@ -276,7 +278,8 @@ export const FDT_Abi = [
       ],
       "stateMutability": "view",
       "type": "function",
-      "gas": 1786
+      "gas": 1816,
+      "constant": true
     },
     {
       "name": "payToContract",
@@ -284,7 +287,8 @@ export const FDT_Abi = [
       "inputs": [],
       "stateMutability": "payable",
       "type": "function",
-      "gas": 41063
+      "gas": 696,
+      "payable": true
     },
     {
       "name": "getPointsPerShare",
@@ -297,7 +301,8 @@ export const FDT_Abi = [
       "inputs": [],
       "stateMutability": "view",
       "type": "function",
-      "gas": 1631
+      "gas": 1661,
+      "constant": true
     },
     {
       "name": "getContractBalance",
@@ -310,7 +315,8 @@ export const FDT_Abi = [
       "inputs": [],
       "stateMutability": "view",
       "type": "function",
-      "gas": 863
+      "gas": 893,
+      "constant": true
     },
     {
       "name": "name",
@@ -323,7 +329,8 @@ export const FDT_Abi = [
       "inputs": [],
       "stateMutability": "view",
       "type": "function",
-      "gas": 8093
+      "gas": 8123,
+      "constant": true
     },
     {
       "name": "symbol",
@@ -336,7 +343,8 @@ export const FDT_Abi = [
       "inputs": [],
       "stateMutability": "view",
       "type": "function",
-      "gas": 7146
+      "gas": 7176,
+      "constant": true
     },
     {
       "name": "decimals",
@@ -349,7 +357,8 @@ export const FDT_Abi = [
       "inputs": [],
       "stateMutability": "view",
       "type": "function",
-      "gas": 1751
+      "gas": 1781,
+      "constant": true
     },
     {
       "name": "balanceOf",
@@ -367,6 +376,45 @@ export const FDT_Abi = [
       ],
       "stateMutability": "view",
       "type": "function",
-      "gas": 1996
+      "gas": 2026,
+      "constant": true
+    },
+    {
+      "name": "withdrawnFunds",
+      "outputs": [
+        {
+          "type": "uint256",
+          "name": ""
+        }
+      ],
+      "inputs": [
+        {
+          "type": "address",
+          "name": "arg0"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function",
+      "gas": 2056,
+      "constant": true
+    },
+    {
+      "name": "pointsCorrection",
+      "outputs": [
+        {
+          "type": "int128",
+          "name": ""
+        }
+      ],
+      "inputs": [
+        {
+          "type": "address",
+          "name": "arg0"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function",
+      "gas": 2086,
+      "constant": true
     }
   ]

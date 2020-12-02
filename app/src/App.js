@@ -6,7 +6,7 @@ import React, { useState } from 'react';
 import Web3 from 'web3';
 
 const web3 = new Web3(Web3.givenProvider);
-const contractAddr = '0x6B0000Fa80ef063Bd5fA54764C9F69545Fc45F33';
+const contractAddr = '';
 const FDTContract = new web3.eth.Contract(FDT_Abi, contractAddr);
 
 function App() {
@@ -14,6 +14,8 @@ function App() {
   const [getCurrentWallet, setGetCurrentWallet] = useState('0x00');
   const [getTotalSupply, setGetTotalSupply] = useState('0');
   const [getCurrentWalletTokenBalance, setGetCurrentWalletTokenBalance] = useState('0');
+  const [getCurrentWalletWithdrawnFunds, setGetCurrentWalletWithdrawnFunds] = useState('0');
+  const [getPointsCorrection, setGetPointsCorrection] = useState('0');
   const [payAmount, setPayAmount] = useState(0);
   const [getContractBalance, setGetContractBalance] = useState(0);
 
@@ -67,6 +69,24 @@ function App() {
 
   }
 
+  const handleGetCurrentWalletWithdrawnFunds = async (e) => {
+    e.preventDefault();
+    const accounts = await window.ethereum.enable();
+    const account = accounts[0];
+    const result = web3.utils.fromWei(await FDTContract.methods.withdrawnFunds(account).call());
+    setGetCurrentWalletWithdrawnFunds(result);
+    console.log(result);
+  }
+
+  const handleGetPointsCorrection = async (e) => {
+    e.preventDefault();
+    const accounts = await window.ethereum.enable();
+    const account = accounts[0];
+    const result = web3.utils.fromWei(await FDTContract.methods.pointsCorrection(account).call());
+    setGetPointsCorrection(result);
+    console.log(result);
+  }
+
   return (
     <div className="App">
       <header className="App-header">
@@ -106,6 +126,24 @@ function App() {
         </button>
         <p>Contract balance: &nbsp;
         { getContractBalance }
+        </p>
+
+        <button
+          onClick={handleGetCurrentWalletWithdrawnFunds}
+          type="button" > 
+          Get Current Wallet Withdrawn Funds
+        </button>
+        <p>Funds withdrawn: &nbsp;
+        { getCurrentWalletWithdrawnFunds }
+        </p>
+
+        <button
+          onClick={handleGetPointsCorrection}
+          type="button" > 
+          Get points correction
+        </button>
+        <p>Points correction: &nbsp;
+        { getPointsCorrection }
         </p>
 
         <form onSubmit={handlePay}>

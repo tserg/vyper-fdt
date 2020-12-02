@@ -37,14 +37,15 @@ pointsPerShare: uint256
 #       The _KeyType will become a required parameter for the getter and it will return _ValueType.
 #       See: https://vyper.readthedocs.io/en/v0.1.0-beta.8/types.html?highlight=getter#mappings
 balanceOf: public(HashMap[address, uint256])
+withdrawnFunds: public(HashMap[address, uint256])
+pointsCorrection: public(HashMap[address, int128])
 allowances: HashMap[address, HashMap[address, uint256]]
 total_supply: uint256
 minter: address
 
 fundsBalance: uint256
 
-withdrawnFunds: HashMap[address, uint256]
-pointsCorrection: HashMap[address, uint256]
+
 
 # ERC20 functions
 
@@ -93,6 +94,11 @@ def transfer(_to : address, _value : uint256) -> bool:
     self.balanceOf[msg.sender] -= _value
     self.balanceOf[_to] += _value
     log Transfer(msg.sender, _to, _value)
+
+    _correction: uint256 = self.pointsPerShare * _value
+    self.pointsCorrection[msg.sender] = self.pointsCorrection[msg.sender] + convert(_correction, int128)
+    self.pointsCorrection[_to] = self.pointsCorrection[_to] - convert(_correction, int128)
+
     return True
 
 
@@ -183,12 +189,12 @@ def burnFrom(_to: address, _value: uint256):
 # FDT functions
 
 @internal
-def accumulativeFundsOf(_receiver: address) -> uint256:
-    return self.pointsPerShare * self.balanceOf[_receiver] + self.pointsCorrection[_receiver]
+def accumulativeFundsOf(_receiver: address) -> int128:
+    return convert((self.pointsPerShare * self.balanceOf[_receiver]), int128) + self.pointsCorrection[_receiver]
 
 @internal
 def withdrawableFundsOf(_receiver: address) -> uint256:
-    return self.accumulativeFundsOf(_receiver) - self.withdrawnFunds[_receiver]
+    return convert(self.accumulativeFundsOf(_receiver), uint256) - self.withdrawnFunds[_receiver]
 
 @internal
 def _distributeFunds(_triggerer: address, _value: uint256):
@@ -238,6 +244,8 @@ def withdrawFunds():
         self._distributeFunds(msg.sender, _newFunds)
 
     _withdrawableFunds: uint256 = self._prepareWithdraw(msg.sender)
+
+    self.fundsBalance -= _withdrawableFunds
 
     send(msg.sender, _withdrawableFunds)
 
