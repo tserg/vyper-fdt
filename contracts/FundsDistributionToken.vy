@@ -193,8 +193,12 @@ def accumulativeFundsOf(_receiver: address) -> int128:
     return convert((self.pointsPerShare * self.balanceOf[_receiver]), int128) + self.pointsCorrection[_receiver]
 
 @internal
-def withdrawableFundsOf(_receiver: address) -> uint256:
+def _withdrawableFundsOf(_receiver: address) -> uint256:
     return convert(self.accumulativeFundsOf(_receiver), uint256) - self.withdrawnFunds[_receiver]
+
+@external
+def withdrawableFundsOf(_receiver: address) -> uint256:
+    return self._withdrawableFundsOf(_receiver)
 
 @internal
 def _distributeFunds(_triggerer: address, _value: uint256):
@@ -227,7 +231,7 @@ def _updateFundsBalance() -> uint256:
 @internal
 def _prepareWithdraw(_receiver: address) -> uint256:
     
-    _withdrawableDividend: uint256 = self.withdrawableFundsOf(_receiver)
+    _withdrawableDividend: uint256 = self._withdrawableFundsOf(_receiver)
 
     self.withdrawnFunds[_receiver] = self.withdrawnFunds[_receiver] + _withdrawableDividend
 
@@ -257,7 +261,6 @@ def withdrawnFundsOf(_receiver: address) -> uint256:
 @external
 @payable
 def payToContract():
-    
     pass
 
 @external
