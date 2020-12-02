@@ -15,7 +15,6 @@ function App() {
   const [getTotalSupply, setGetTotalSupply] = useState('0');
   const [getCurrentWalletTokenBalance, setGetCurrentWalletTokenBalance] = useState('0');
   const [getCurrentWalletWithdrawnFunds, setGetCurrentWalletWithdrawnFunds] = useState('0');
-  const [getPointsCorrection, setGetPointsCorrection] = useState('0');
   const [payAmount, setPayAmount] = useState(0);
   const [getContractBalance, setGetContractBalance] = useState(0);
 
@@ -40,13 +39,12 @@ function App() {
     const account = accounts[0];
     const payAmountFormatted = web3.utils.toWei(payAmount, 'ether');
     console.log(payAmountFormatted);
-    const result = await FDTContract.methods.payToContract().send({from: account, value: payAmountFormatted});
-    console.log(result);
+    web3.eth.sendTransaction({from: account, to: contractAddr, value: payAmountFormatted});
   }
 
   const handleGetContractBalance = async (e) => {
     e.preventDefault();
-    const result = web3.utils.fromWei(await FDTContract.methods.getContractBalance().call());
+    const result = web3.utils.fromWei(await web3.eth.getBalance(contractAddr));
     setGetContractBalance(result);
     console.log(result);
   }
@@ -73,17 +71,8 @@ function App() {
     e.preventDefault();
     const accounts = await window.ethereum.enable();
     const account = accounts[0];
-    const result = web3.utils.fromWei(await FDTContract.methods.withdrawnFunds(account).call());
+    const result = web3.utils.fromWei(await FDTContract.methods.withdrawnFundsOf(account).call());
     setGetCurrentWalletWithdrawnFunds(result);
-    console.log(result);
-  }
-
-  const handleGetPointsCorrection = async (e) => {
-    e.preventDefault();
-    const accounts = await window.ethereum.enable();
-    const account = accounts[0];
-    const result = web3.utils.fromWei(await FDTContract.methods.pointsCorrection(account).call());
-    setGetPointsCorrection(result);
     console.log(result);
   }
 
@@ -135,15 +124,6 @@ function App() {
         </button>
         <p>Funds withdrawn: &nbsp;
         { getCurrentWalletWithdrawnFunds }
-        </p>
-
-        <button
-          onClick={handleGetPointsCorrection}
-          type="button" > 
-          Get points correction
-        </button>
-        <p>Points correction: &nbsp;
-        { getPointsCorrection }
         </p>
 
         <form onSubmit={handlePay}>

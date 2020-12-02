@@ -18,6 +18,10 @@ event Approval:
     spender: indexed(address)
     value: uint256
 
+event FundsDeposited:
+    sender: indexed(address)
+    value: uint256
+
 event FundsDistributed:
     receiver: indexed(address)
     value: uint256
@@ -37,8 +41,8 @@ pointsPerShare: uint256
 #       The _KeyType will become a required parameter for the getter and it will return _ValueType.
 #       See: https://vyper.readthedocs.io/en/v0.1.0-beta.8/types.html?highlight=getter#mappings
 balanceOf: public(HashMap[address, uint256])
-withdrawnFunds: public(HashMap[address, uint256])
-pointsCorrection: public(HashMap[address, int128])
+withdrawnFunds: HashMap[address, uint256]
+pointsCorrection: HashMap[address, int128]
 allowances: HashMap[address, HashMap[address, uint256]]
 total_supply: uint256
 minter: address
@@ -196,10 +200,6 @@ def accumulativeFundsOf(_receiver: address) -> int128:
 def _withdrawableFundsOf(_receiver: address) -> uint256:
     return convert(self.accumulativeFundsOf(_receiver), uint256) - self.withdrawnFunds[_receiver]
 
-@external
-def withdrawableFundsOf(_receiver: address) -> uint256:
-    return self._withdrawableFundsOf(_receiver)
-
 @internal
 def _distributeFunds(_triggerer: address, _value: uint256):
     """
@@ -260,16 +260,11 @@ def withdrawnFundsOf(_receiver: address) -> uint256:
 
 @external
 @payable
-def payToContract():
-    pass
+def __default__():
+    log FundsDeposited(msg.sender, msg.value)
 
 @external
 @view
 def getPointsPerShare() -> uint256:
     return self.pointsPerShare
 
-
-@external
-@view
-def getContractBalance() -> uint256:
-    return self.balance

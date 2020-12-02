@@ -44,6 +44,23 @@ export const FDT_Abi = [
       "type": "event"
     },
     {
+      "name": "FundsDeposited",
+      "inputs": [
+        {
+          "type": "address",
+          "name": "sender",
+          "indexed": true
+        },
+        {
+          "type": "uint256",
+          "name": "value",
+          "indexed": false
+        }
+      ],
+      "anonymous": false,
+      "type": "event"
+    },
+    {
       "name": "FundsDistributed",
       "inputs": [
         {
@@ -282,12 +299,8 @@ export const FDT_Abi = [
       "constant": true
     },
     {
-      "name": "payToContract",
-      "outputs": [],
-      "inputs": [],
       "stateMutability": "payable",
-      "type": "function",
-      "gas": 696,
+      "type": "fallback",
       "payable": true
     },
     {
@@ -301,21 +314,7 @@ export const FDT_Abi = [
       "inputs": [],
       "stateMutability": "view",
       "type": "function",
-      "gas": 1661,
-      "constant": true
-    },
-    {
-      "name": "getContractBalance",
-      "outputs": [
-        {
-          "type": "uint256",
-          "name": ""
-        }
-      ],
-      "inputs": [],
-      "stateMutability": "view",
-      "type": "function",
-      "gas": 893,
+      "gas": 1631,
       "constant": true
     },
     {
@@ -329,7 +328,7 @@ export const FDT_Abi = [
       "inputs": [],
       "stateMutability": "view",
       "type": "function",
-      "gas": 8123,
+      "gas": 8063,
       "constant": true
     },
     {
@@ -343,7 +342,7 @@ export const FDT_Abi = [
       "inputs": [],
       "stateMutability": "view",
       "type": "function",
-      "gas": 7176,
+      "gas": 7116,
       "constant": true
     },
     {
@@ -357,7 +356,7 @@ export const FDT_Abi = [
       "inputs": [],
       "stateMutability": "view",
       "type": "function",
-      "gas": 1781,
+      "gas": 1721,
       "constant": true
     },
     {
@@ -376,26 +375,7 @@ export const FDT_Abi = [
       ],
       "stateMutability": "view",
       "type": "function",
-      "gas": 2026,
-      "constant": true
-    },
-    {
-      "name": "withdrawnFunds",
-      "outputs": [
-        {
-          "type": "uint256",
-          "name": ""
-        }
-      ],
-      "inputs": [
-        {
-          "type": "address",
-          "name": "arg0"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function",
-      "gas": 2056,
+      "gas": 1966,
       "constant": true
     },
     {
@@ -414,7 +394,7 @@ export const FDT_Abi = [
       ],
       "stateMutability": "view",
       "type": "function",
-      "gas": 2086,
+      "gas": 1996,
       "constant": true
     }
   ]
