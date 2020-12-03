@@ -45,7 +45,6 @@ withdrawnFunds: HashMap[address, uint256]
 pointsCorrection: HashMap[address, int128]
 allowances: HashMap[address, HashMap[address, uint256]]
 total_supply: uint256
-minter: address
 
 fundsBalance: uint256
 
@@ -60,7 +59,6 @@ def __init__(_name: String[64], _symbol: String[32], _decimals: uint256, _supply
     self.decimals = _decimals
     self.balanceOf[msg.sender] = _supply
     self.total_supply = _supply
-    self.minter = msg.sender
     self.fundsBalance = 0
     log Transfer(ZERO_ADDRESS, msg.sender, _supply)
 
@@ -139,22 +137,6 @@ def approve(_spender : address, _value : uint256) -> bool:
     self.allowances[msg.sender][_spender] = _value
     log Approval(msg.sender, _spender, _value)
     return True
-
-
-@external
-def mint(_to: address, _value: uint256):
-    """
-    @dev Mint an amount of the token and assigns it to an account.
-         This encapsulates the modification of balances such that the
-         proper events are emitted.
-    @param _to The account that will receive the created tokens.
-    @param _value The amount that will be created.
-    """
-    assert msg.sender == self.minter
-    assert _to != ZERO_ADDRESS
-    self.total_supply += _value
-    self.balanceOf[_to] += _value
-    log Transfer(ZERO_ADDRESS, _to, _value)
 
 
 @internal
