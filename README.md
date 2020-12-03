@@ -40,11 +40,16 @@ ganache-cli
 ```
 truffle migrate --network development
 ```
-3. Navigate to the `app` directory and launch the React app.
+3. Replace line 9 in app/App.js with the deployed contract address.
+4. Navigate to the `app` directory and launch the React app.
 ```
 cd app
 npm start
 ```
+
+### Testing
+
+Run `brownie test`
 
 ## Authors
 
