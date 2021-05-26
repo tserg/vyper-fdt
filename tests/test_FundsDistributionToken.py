@@ -23,7 +23,7 @@ def test_same_IO(FDT_contract, accounts):
 		Address with 100 tokens pays to contract, and withdraws
 	"""
 
-	tx1 = FDT_contract.payToContract({'from': accounts[0], 'amount': 1e18})
+	tx1 = accounts[0].transfer(FDT_contract, '1 ether')
 
 	assert FDT_contract.balance() == 1e18
 
@@ -42,7 +42,7 @@ def test_different_IO_single_deposit(FDT_contract, accounts):
 	"""
 		Non-token holding address pays to contract, address with 100 tokens withdraws
 	"""
-	tx1 = FDT_contract.payToContract({'from': accounts[1], 'amount': 1e18})
+	tx1 = accounts[1].transfer(FDT_contract, '1 ether')
 
 	assert FDT_contract.balance() == 1e18
 
@@ -66,7 +66,7 @@ def test_two_token_holders_single_deposit(FDT_contract, accounts):
 
 	assert len(tx1.events) == 1
 
-	tx2 = FDT_contract.payToContract({'from': accounts[1], 'amount': 1e18})
+	tx2 = accounts[1].transfer(FDT_contract, '1 ether')
 
 	assert FDT_contract.balance() == 1e18
 
@@ -102,7 +102,7 @@ def test_three_token_holders_single_deposit(FDT_contract, accounts):
 
 	assert len(tx1_2.events) == 1
 
-	tx2 = FDT_contract.payToContract({'from': accounts[1], 'amount': 1e18})
+	tx2 = accounts[1].transfer(FDT_contract, '1 ether')
 
 	assert FDT_contract.balance() == 1e18
 
@@ -140,7 +140,7 @@ def test_different_IO_single_deposit_with_token_transfer(FDT_contract, accounts)
 		Token holding 100 tokens pays to contract, transfers all tokens to another address.
 		Both withdraws.
 	"""
-	tx1 = FDT_contract.payToContract({'from': accounts[1], 'amount': 1e18})
+	tx1 = accounts[1].transfer(FDT_contract, '1 ether')
 
 	assert FDT_contract.balance() == 1e18
 
@@ -178,7 +178,7 @@ def test_multiple_deposit_with_intervening_transfer_two_withdrawals(FDT_contract
 
 	assert len(FDT_transfer.events) == 1
 
-	payment1 = FDT_contract.payToContract({'from': accounts[1], 'amount': 1e18})
+	payment1 = accounts[1].transfer(FDT_contract, '1 ether')
 
 	assert FDT_contract.balance() == 1e18
 
@@ -192,7 +192,7 @@ def test_multiple_deposit_with_intervening_transfer_two_withdrawals(FDT_contract
 	assert FDT_contract.balance() == 0.4e18
 	assert accounts[0].balance () == account1_balance1 + 0.6e18
 
-	payment1 = FDT_contract.payToContract({'from': accounts[1], 'amount': 2e18})
+	payment2 = accounts[1].transfer(FDT_contract, '2 ether')
 
 	assert FDT_contract.balance() == 2.4e18
 
@@ -204,7 +204,7 @@ def test_multiple_deposit_with_intervening_transfer_two_withdrawals(FDT_contract
 	assert account2_withdraw1.events['FundsWithdrawn']['receiver'] == accounts[1]
 	assert account2_withdraw1.events['FundsWithdrawn']['value'] == 1.2e18
 	assert FDT_contract.balance() == 1.2e18
-	assert accounts[1].balance () == account2_balance + 1.2e18 
+	assert accounts[1].balance () == account2_balance + 1.2e18
 
 	account1_balance2 = accounts[0].balance()
 
@@ -227,7 +227,7 @@ def test_multiple_deposit_lower_value_with_intervening_transfer_two_withdrawals(
 
 	assert len(FDT_transfer.events) == 1
 
-	payment1 = FDT_contract.payToContract({'from': accounts[1], 'amount': 5e18})
+	payment1 = accounts[1].transfer(FDT_contract, '5 ether')
 
 	assert FDT_contract.balance() == 5e18
 
@@ -241,7 +241,7 @@ def test_multiple_deposit_lower_value_with_intervening_transfer_two_withdrawals(
 	assert FDT_contract.balance() == 2e18
 	assert accounts[0].balance () == account1_balance1 + 3e18
 
-	payment1 = FDT_contract.payToContract({'from': accounts[1], 'amount': 1e18})
+	payment1 = accounts[1].transfer(FDT_contract, '1 ether')
 
 	assert FDT_contract.balance() == 3e18
 
@@ -253,7 +253,7 @@ def test_multiple_deposit_lower_value_with_intervening_transfer_two_withdrawals(
 	assert account2_withdraw1.events['FundsWithdrawn']['receiver'] == accounts[1]
 	assert account2_withdraw1.events['FundsWithdrawn']['value'] == 2.4e18
 	assert FDT_contract.balance() == 0.6e18
-	assert accounts[1].balance () == account2_balance + 2.4e18 
+	assert accounts[1].balance () == account2_balance + 2.4e18
 
 	account1_balance2 = accounts[0].balance()
 
