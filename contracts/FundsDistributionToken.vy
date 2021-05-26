@@ -53,14 +53,34 @@ fundsBalance: uint256
 # ERC20 functions
 
 @external
-def __init__(_name: String[64], _symbol: String[32], _decimals: uint256, _supply: uint256):
-    self.name = _name
-    self.symbol = _symbol
-    self.decimals = _decimals
-    self.balanceOf[msg.sender] = _supply
-    self.total_supply = _supply
-    self.fundsBalance = 0
-    log Transfer(ZERO_ADDRESS, msg.sender, _supply)
+def __init__():
+
+	pass
+
+@external
+def initialize(
+	_name: String[64],
+	_symbol: String[32],
+	_decimals: uint256,
+	_supply: uint256
+) -> bool:
+	"""
+	@notice Initialize the contract
+	@dev Separate from '__init__' method to facilitate factory pattern in 'FundsDistributionTokenFactory'
+	@param _name Name of the funds distribution token
+	@param _symbol Symbol of the funds distribution token
+	@param _decimals Number of decimals for the funds distribution token
+	@param _supply Total supply of the funds distribution token
+	"""
+	self.name = _name
+	self.symbol = _symbol
+	self.decimals = _decimals
+	self.balanceOf[msg.sender] = _supply
+	self.total_supply = _supply
+	self.fundsBalance = 0
+	log Transfer(ZERO_ADDRESS, msg.sender, _supply)
+
+	return True
 
 
 @view
@@ -197,7 +217,7 @@ def _distributeFunds(_triggerer: address, _value: uint256):
 
 @internal
 def _updateFundsBalance() -> uint256:
-    
+
     _prevFundsBalance: uint256 = self.fundsBalance
 
     self.fundsBalance = self.balance
@@ -212,7 +232,7 @@ def _updateFundsBalance() -> uint256:
 
 @internal
 def _prepareWithdraw(_receiver: address) -> uint256:
-    
+
     _withdrawableDividend: uint256 = self._withdrawableFundsOf(_receiver)
 
     self.withdrawnFunds[_receiver] = self.withdrawnFunds[_receiver] + _withdrawableDividend
@@ -249,4 +269,3 @@ def __default__():
 @view
 def getPointsPerShare() -> uint256:
     return self.pointsPerShare
-
