@@ -15,7 +15,7 @@ interface FundsDistributionToken:
 	) -> bool: nonpayable
 
 event FundsDistributionTokenCreated:
-	creator: address
+	token: address
 	name: String[64]
 	symbol: String[32]
 
@@ -55,5 +55,5 @@ def deploy_fdt_contract(
 		_decimals,
 		_supply
 	)
-
+	log FundsDistributionTokenCreated(_contract, _name, _symbol)
 	return _contract

@@ -1,13 +1,15 @@
 import logo from './logo.svg';
 import './App.css';
 
-import { FDT_Abi } from './abis';
+import { FDT_Abi, FDT_Factory_Abi } from './abis';
 import React, { useState } from 'react';
 import Web3 from 'web3';
 
 const web3 = new Web3(Web3.givenProvider);
-const contractAddr = '';
+const contractAddr = '0x9A2C13b2925e6414631DBDBa9c2984A6Aaf8Be09';
+const factoryContractAddr = '0xa0f8E20B34735Ae52376161F2B60213Aa9eAe651';
 const FDTContract = new web3.eth.Contract(FDT_Abi, contractAddr);
+const FDTFactoryContract = new web3.eth.Contract(FDT_Factory_Abi, factoryContractAddr)
 
 function App() {
 
@@ -17,6 +19,7 @@ function App() {
   const [getCurrentWalletWithdrawnFunds, setGetCurrentWalletWithdrawnFunds] = useState('0');
   const [payAmount, setPayAmount] = useState(0);
   const [getContractBalance, setGetContractBalance] = useState(0);
+  const [getMusicakesAddress, setMusicakesAddress] = useState('0x');
 
   const handleGetCurrentWallet = async (e) => {
     e.preventDefault();
@@ -76,13 +79,25 @@ function App() {
     console.log(result);
   }
 
+  const handleDeployMusicakes = async (e) => {
+	  e.preventDefault();
+	  const accounts = await window.ethereum.enable();
+      const account = accounts[0];
+      const result = await FDTFactoryContract.methods.deploy_fdt_contract("Musicakes", "MCAKES", 0, 100).send({from: account});
+
+	  console.log(result);
+	  console.log(result.events.FundsDistributionTokenCreated.address)
+  }
+
   return (
     <div className="App">
       <header className="App-header">
 
+
+
         <button
           onClick={handleGetCurrentWallet}
-          type="button" > 
+          type="button" >
           Connect Wallet
         </button>
         <p>
@@ -90,9 +105,19 @@ function App() {
           { getCurrentWallet }
         </p>
 
+		<button
+          onClick={handleDeployMusicakes}
+          type="button" >
+          Deploy Musicakes
+        </button>
+        <p>
+          Musicakes address: &nbsp;
+          { getMusicakesAddress }
+        </p>
+
         <button
           onClick={handleGetTotalSupply}
-          type="button" > 
+          type="button" >
           Get Total Supply
         </button>
         <p>Total Supply: &nbsp;
@@ -101,7 +126,7 @@ function App() {
 
         <button
           onClick={handleGetCurrentWalletTokenBalance}
-          type="button" > 
+          type="button" >
           Get Current Wallet Token Balance
         </button>
         <p>Number of tokens in current wallet: &nbsp;
@@ -110,7 +135,7 @@ function App() {
 
         <button
           onClick={handleGetContractBalance}
-          type="button" > 
+          type="button" >
           Get Contract Balance
         </button>
         <p>Contract balance: &nbsp;
@@ -119,7 +144,7 @@ function App() {
 
         <button
           onClick={handleGetCurrentWalletWithdrawnFunds}
-          type="button" > 
+          type="button" >
           Get Current Wallet Withdrawn Funds
         </button>
         <p>Funds withdrawn: &nbsp;
@@ -130,7 +155,7 @@ function App() {
           <p>
           <label>
             Pay to Contract:
-            <input 
+            <input
               type="text"
               name="name"
               value={payAmount}

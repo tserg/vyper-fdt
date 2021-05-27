@@ -58,6 +58,7 @@ def __init__():
 	pass
 
 @external
+@nonreentrant('lock')
 def initialize(
 	_name: String[64],
 	_symbol: String[32],
