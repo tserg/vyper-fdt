@@ -101,7 +101,7 @@ export const FDT_Abi = [
 	"type": "constructor"
   },
   {
-	"gas": 380052,
+	"gas": 380160,
 	"inputs": [
 	  {
 		"name": "_name",
@@ -118,6 +118,10 @@ export const FDT_Abi = [
 	  {
 		"name": "_supply",
 		"type": "uint256"
+	  },
+	  {
+		"name": "_ownerAddress",
+		"type": "address"
 	  }
 	],
 	"name": "initialize",
@@ -406,7 +410,7 @@ export const FDT_Factory_Abi = [
 	"type": "constructor"
   },
   {
-	"gas": 60108,
+	"gas": 60120,
 	"inputs": [
 	  {
 		"name": "_name",

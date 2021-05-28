@@ -6,8 +6,8 @@ import React, { useState } from 'react';
 import Web3 from 'web3';
 
 const web3 = new Web3(Web3.givenProvider);
-const contractAddr = '0x9A2C13b2925e6414631DBDBa9c2984A6Aaf8Be09';
-const factoryContractAddr = '0xa0f8E20B34735Ae52376161F2B60213Aa9eAe651';
+const contractAddr = '0x2fC132b0576a5fFa478c09998B9b82C47A7D3c2A';
+const factoryContractAddr = '0x2146BEe7Ff94d76B5844AFB8262a987e7061C9f6';
 const FDTContract = new web3.eth.Contract(FDT_Abi, contractAddr);
 const FDTFactoryContract = new web3.eth.Contract(FDT_Factory_Abi, factoryContractAddr)
 
@@ -86,7 +86,8 @@ function App() {
       const result = await FDTFactoryContract.methods.deploy_fdt_contract("Musicakes", "MCAKES", 0, 100).send({from: account});
 
 	  console.log(result);
-	  console.log(result.events.FundsDistributionTokenCreated.address)
+	  console.log(result.events.FundsDistributionTokenCreated)
+	  console.log(result.events.FundsDistributionTokenCreated.returnValues[0])
   }
 
   return (

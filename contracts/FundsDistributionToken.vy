@@ -63,7 +63,8 @@ def initialize(
 	_name: String[64],
 	_symbol: String[32],
 	_decimals: uint256,
-	_supply: uint256
+	_supply: uint256,
+	_ownerAddress: address
 ) -> bool:
 	"""
 	@notice Initialize the contract
@@ -72,14 +73,15 @@ def initialize(
 	@param _symbol Symbol of the funds distribution token
 	@param _decimals Number of decimals for the funds distribution token
 	@param _supply Total supply of the funds distribution token
+	@param _ownerAddress Address to mint initial supply to
 	"""
 	self.name = _name
 	self.symbol = _symbol
 	self.decimals = _decimals
-	self.balanceOf[msg.sender] = _supply
+	self.balanceOf[_ownerAddress] = _supply
 	self.total_supply = _supply
 	self.fundsBalance = 0
-	log Transfer(ZERO_ADDRESS, msg.sender, _supply)
+	log Transfer(ZERO_ADDRESS, _ownerAddress, _supply)
 
 	return True
 

@@ -11,7 +11,8 @@ interface FundsDistributionToken:
 		_name: String[64],
 		_symbol: String[32],
 		_decimals: uint256,
-		_supply: uint256
+		_supply: uint256,
+		_ownerAddress: address
 	) -> bool: nonpayable
 
 event FundsDistributionTokenCreated:
@@ -53,7 +54,8 @@ def deploy_fdt_contract(
 		_name,
 		_symbol,
 		_decimals,
-		_supply
+		_supply,
+		msg.sender
 	)
 	log FundsDistributionTokenCreated(_contract, _name, _symbol)
 	return _contract
