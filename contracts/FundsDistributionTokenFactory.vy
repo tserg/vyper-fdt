@@ -16,7 +16,7 @@ interface FundsDistributionToken:
 	) -> bool: nonpayable
 
 event FundsDistributionTokenCreated:
-	token: address
+	token: indexed(address)
 	name: String[64]
 	symbol: String[32]
 
