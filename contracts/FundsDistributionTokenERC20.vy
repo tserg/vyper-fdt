@@ -199,10 +199,12 @@ def burnFrom(_to: address, _value: uint256):
 
 # FDT functions
 
+@view
 @internal
 def accumulativeFundsOf(_receiver: address) -> int128:
     return convert((self.pointsPerShare * self.balanceOf[_receiver]), int128) + self.pointsCorrection[_receiver]
 
+@view
 @internal
 def _withdrawableFundsOf(_receiver: address) -> uint256:
     return convert(self.accumulativeFundsOf(_receiver), uint256) - self.withdrawnFunds[_receiver]
@@ -266,6 +268,11 @@ def updateFundsTokenBalance():
 
 	if _newFunds > 0:
 		self._distributeFunds(msg.sender, _newFunds)
+
+@view
+@external
+def withdrawableFundsOf(_receiver: address) -> uint256:
+	return convert(self.accumulativeFundsOf(_receiver), uint256) - self.withdrawnFunds[_receiver]
 
 @view
 @external

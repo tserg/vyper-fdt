@@ -49,3 +49,23 @@ def test_initial_state(FDTERC20FactoryContract, accounts):
 
 	assert FundsDistributionTokenERC20[1].balanceOf(accounts[0]) == 100
 	assert FundsDistributionTokenERC20[1].balanceOf(accounts[1]) == 0
+
+def test_same_IO(ERC20, accounts):
+
+	"""
+		Address with 100 tokens pays to contract, and withdraws
+	"""
+	fdt_instance = FundsDistributionTokenERC20.at(FDT_INSTANCE)
+	tx1_1 = ERC20.approve(FundsDistributionTokenERC20[1], 500, {'from': accounts[0]})
+	tx1_2 = FundsDistributionTokenERC20[1].payToContract(500, {'from': accounts[0]})
+
+	assert ERC20.balanceOf(FundsDistributionTokenERC20[1]) == 500
+
+	account_balance = ERC20.balanceOf(accounts[0])
+
+	tx2 = fdt_instance.withdrawFunds({'from': accounts[0]})
+
+	assert tx2.events['FundsDistributed']['receiver'] == accounts[0]
+	assert tx2.events['FundsWithdrawn']['receiver'] == accounts[0]
+	assert ERC20.balanceOf(FundsDistributionTokenERC20[1]) == 0
+	assert ERC20.balanceOf(accounts[0]) == account_balance + 500
