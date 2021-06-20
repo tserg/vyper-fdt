@@ -12,6 +12,7 @@ def main():
 	)
 	# FundsDistributionToken.deploy('Musicakes', 'MCAKES', 0, 100, {'from': acct})
 
+	'''
 	tx = fdt_factory.deploy_fdt_contract(
 		'Musicakes',
 		'MCAKES',
@@ -21,3 +22,4 @@ def main():
 
 	fdt_instance = FundsDistributionToken.at(tx.new_contracts[0])
 	print("Address of Musicakes instance: " + str(fdt_instance))
+	'''

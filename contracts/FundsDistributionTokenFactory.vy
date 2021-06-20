@@ -16,12 +16,15 @@ interface FundsDistributionToken:
 	) -> bool: nonpayable
 
 event FundsDistributionTokenCreated:
+	fundsId: uint256
 	token: indexed(address)
 	name: String[64]
 	symbol: String[32]
 
-admin: public(address)
+#admin: public(address)
 target: public(address)
+fundsId: public(uint256)
+fundsIdToAddress: public(HashMap[uint256, address])
 
 @external
 def __init__(_target: address, _admin: address):
@@ -30,7 +33,8 @@ def __init__(_target: address, _admin: address):
 	@param _target 'FundsDistributionToken' contract address
 	"""
 	self.target = _target
-	self.admin = _admin
+	#self.admin = _admin
+	self.fundsId = 0
 
 @external
 def deploy_fdt_contract(
@@ -47,7 +51,7 @@ def deploy_fdt_contract(
 	@param _supply Total supply of the funds distribution token
 	"""
 
-	assert msg.sender == self.admin
+	#assert msg.sender == self.admin
 
 	_contract: address = create_forwarder_to(self.target)
 	FundsDistributionToken(_contract).initialize(
@@ -57,5 +61,7 @@ def deploy_fdt_contract(
 		_supply,
 		msg.sender
 	)
-	log FundsDistributionTokenCreated(_contract, _name, _symbol)
+	self.fundsId += 1
+	self.fundsIdToAddress[self.fundsId] = _contract
+	log FundsDistributionTokenCreated(self.fundsId, _contract, _name, _symbol)
 	return _contract
