@@ -119,3 +119,42 @@ def test_two_token_holders_single_deposit(ERC20, accounts):
 	assert tx4.events['FundsWithdrawn']['receiver'] == accounts[1]
 	assert ERC20.balanceOf(fdt_instance) == 0
 	assert ERC20.balanceOf(accounts[1]) == account_balance + 250
+
+def test_three_token_holders_single_deposit(ERC20, accounts):
+	"""
+		Single payer, three addresses withdraws
+	"""
+	fdt_instance = FundsDistributionTokenERC20.at(FDT_INSTANCE)
+	tx1_1 = fdt_instance.transfer(accounts[1], 25, {'from': accounts[0]})
+	tx1_2 = fdt_instance.transfer(accounts[2], 35, {'from': accounts[0]})
+
+	tx2_1 = ERC20.transfer(accounts[1], 500, {'from': accounts[0]})
+	tx2_2 = ERC20.approve(FundsDistributionTokenERC20[1], 500, {'from': accounts[1]})
+	tx2_3 = FundsDistributionTokenERC20[1].payToContract(500, {'from': accounts[1]})
+
+	assert ERC20.balanceOf(FundsDistributionTokenERC20[1]) == 500
+
+	account1_balance = ERC20.balanceOf(accounts[0])
+
+	tx3 = fdt_instance.withdrawFunds({'from': accounts[0]})
+
+	assert tx3.events['FundsDistributed']['receiver'] == accounts[0]
+	assert tx3.events['FundsWithdrawn']['receiver'] == accounts[0]
+	assert ERC20.balanceOf(fdt_instance) == 300
+	assert ERC20.balanceOf(accounts[0]) == account1_balance + 200
+
+	account2_balance = ERC20.balanceOf(accounts[1])
+
+	tx4 = fdt_instance.withdrawFunds({'from': accounts[1]})
+
+	assert tx4.events['FundsWithdrawn']['receiver'] == accounts[1]
+	assert ERC20.balanceOf(fdt_instance) == 175
+	assert ERC20.balanceOf(accounts[1]) == account2_balance + 125
+
+	account3_balance = ERC20.balanceOf(accounts[2])
+
+	tx5 = fdt_instance.withdrawFunds({'from': accounts[2]})
+
+	assert tx5.events['FundsWithdrawn']['receiver'] == accounts[2]
+	assert ERC20.balanceOf(fdt_instance) == 0
+	assert ERC20.balanceOf(accounts[2]) == account3_balance + 175
