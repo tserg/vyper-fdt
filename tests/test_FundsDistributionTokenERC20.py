@@ -36,8 +36,6 @@ def test_deploy_fdt_from_factory(FDTERC20FactoryContract, ERC20, accounts):
 
 	global FDT_INSTANCE
 	FDT_INSTANCE = tx1.new_contracts[0]
-	assert tx1.events[0]['name'] == TOKEN_NAME
-	assert tx1.events[0]['symbol'] == TOKEN_SYMBOL
 
 @pytest.fixture(autouse=True)
 def isolation(fn_isolation):
@@ -68,4 +66,25 @@ def test_same_IO(ERC20, accounts):
 	assert tx2.events['FundsDistributed']['receiver'] == accounts[0]
 	assert tx2.events['FundsWithdrawn']['receiver'] == accounts[0]
 	assert ERC20.balanceOf(FundsDistributionTokenERC20[1]) == 0
+	assert ERC20.balanceOf(accounts[0]) == account_balance + 500
+
+def test_different_IO_single_deposit(ERC20, accounts):
+
+	"""
+		Non-token holding address pays to contract, address with 100 tokens withdraws
+	"""
+	fdt_instance = FundsDistributionTokenERC20.at(FDT_INSTANCE)
+	tx0 = ERC20.transfer(accounts[1], 500, {'from': accounts[0]})
+	tx1_1 = ERC20.approve(FundsDistributionTokenERC20[1], 500, {'from': accounts[1]})
+	tx1_2 = FundsDistributionTokenERC20[1].payToContract(500, {'from': accounts[1]})
+
+	assert ERC20.balanceOf(FundsDistributionTokenERC20[1]) == 500
+
+	account_balance = ERC20.balanceOf(accounts[0])
+
+	tx2 = fdt_instance.withdrawFunds({'from': accounts[0]})
+
+	assert tx2.events['FundsDistributed']['receiver'] == accounts[0]
+	assert tx2.events['FundsWithdrawn']['receiver'] == accounts[0]
+	assert ERC20.balanceOf(accounts[0])
 	assert ERC20.balanceOf(accounts[0]) == account_balance + 500
