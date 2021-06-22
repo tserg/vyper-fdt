@@ -30,22 +30,22 @@ pip install -r requirements.txt
 ```
 This will install all of the required packages we selected within the `requirements.txt` file.
 
+#### eth-brownie
+
+This project uses eth-brownie for deployment and testing the Vyper smart contracts. The installation instructions can be found in the [documentation](https://eth-brownie.readthedocs.io/en/stable/install.html).
+
 ### Local Development
 
-1. Launch your development blockchain in a terminal. Here, we use ganache-cli with port 8545.
+1. To compile the contracts, run:
 ```
-ganache-cli
+brownie compile
 ```
-2. In a separate terminal, navigate to the directory and migrate the contracts to the development blockchain. If your development blockchain is using a different port, please amend `truffle-config.js`.
+2. To deploy the contracts, run:
 ```
-truffle migrate --network development
+brownie run deploy.py --network development
+brownie run deploy_erc20.py --network development
 ```
-3. Replace line 9 in app/App.js with the deployed contract address.
-4. Navigate to the `app` directory and launch the React app.
-```
-cd app
-npm start
-```
+3. To deploy to testnets, replace `development` with the applicable name.
 
 ### Testing
 
