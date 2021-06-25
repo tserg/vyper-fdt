@@ -121,8 +121,11 @@ def transfer(_to : address, _value : uint256) -> bool:
     log Transfer(msg.sender, _to, _value)
 
     _correction: uint256 = self.pointsPerShare * _value
-    self.pointsCorrection[msg.sender] = self.pointsCorrection[msg.sender] + convert(_correction, int128)
-    self.pointsCorrection[_to] = self.pointsCorrection[_to] - convert(_correction, int128)
+    _senderWithdrawnFunds: uint256 = self.withdrawnFunds[msg.sender]
+
+    if _senderWithdrawnFunds > 0:
+        self.pointsCorrection[msg.sender] = self.pointsCorrection[msg.sender] + convert(_correction, int128)
+        self.pointsCorrection[_to] = self.pointsCorrection[_to] - convert(_correction, int128)
 
     return True
 
