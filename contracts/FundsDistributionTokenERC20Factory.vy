@@ -22,28 +22,33 @@ event FundsDistributionTokenCreated:
 	name: String[64]
 	symbol: String[32]
 
-#admin: public(address)
+event PaymentTokenUpdated:
+	previousPaymentToken: address
+	newPaymentToken: address
+
+admin: public(address)
 target: public(address)
 fundsId: public(uint256)
 fundsIdToAddress: public(HashMap[uint256, address])
+paymentTokenAddress: public(address)
 
 @external
-def __init__(_target: address, _admin: address):
+def __init__(_target: address, _admin: address, _paymentTokenAddress: address):
 	"""
 	@notice Constructor
 	@param _target 'FundsDistributionToken' contract address
 	"""
 	self.target = _target
-	#self.admin = _admin
+	self.admin = _admin
 	self.fundsId = 0
+	self.paymentTokenAddress = _paymentTokenAddress
 
 @external
 def deploy_fdt_contract(
 	_name: String[64],
 	_symbol: String[32],
 	_decimals: uint256,
-	_supply: uint256,
-	_paymentTokenAddress: address
+	_supply: uint256
 ) -> address:
 	"""
 	@notice Deploy a funds distribution token contract
@@ -62,9 +67,23 @@ def deploy_fdt_contract(
 		_decimals,
 		_supply,
 		msg.sender,
-		_paymentTokenAddress
+		self.paymentTokenAddress
 	)
 	self.fundsId += 1
 	self.fundsIdToAddress[self.fundsId] = _contract
 	log FundsDistributionTokenCreated(self.fundsId, _contract, _name, _symbol)
 	return _contract
+
+@external
+def set_payment_token(_token: address):
+	"""
+	@notice Set the payment token address for FDT contracts
+	@param _token Address of the payment token
+	"""
+	# Check that caller is admin
+	assert msg.sender == self.admin
+	_previousPaymentTokenAddress: address = self.paymentTokenAddress
+
+	self.paymentTokenAddress = _token
+
+	log PaymentTokenUpdated(_previousPaymentTokenAddress, _token)
