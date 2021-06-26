@@ -26,13 +26,13 @@ def FDTERC20Contract(FundsDistributionTokenERC20, accounts):
 	yield FundsDistributionTokenERC20.deploy({'from': accounts[0]})
 
 @pytest.fixture(scope="module")
-def FDTERC20FactoryContract(FDTERC20Contract, FundsDistributionTokenERC20Factory, accounts):
-	yield FundsDistributionTokenERC20Factory.deploy(FundsDistributionTokenERC20[0].address, accounts[0], {'from': accounts[0]})
+def FDTERC20FactoryContract(ERC20, FDTERC20Contract, FundsDistributionTokenERC20Factory, accounts):
+	yield FundsDistributionTokenERC20Factory.deploy(FundsDistributionTokenERC20[0].address, accounts[0], ERC20.address, {'from': accounts[0]})
 
 @pytest.fixture(scope="module", autouse=True)
 def test_deploy_fdt_from_factory(FDTERC20FactoryContract, ERC20, accounts):
 
-	tx1 = FDTERC20FactoryContract.deploy_fdt_contract(TOKEN_NAME, TOKEN_SYMBOL, TOKEN_DECIMALS, TOKEN_SUPPLY, ERC20.address, {'from': accounts[0]})
+	tx1 = FDTERC20FactoryContract.deploy_fdt_contract(TOKEN_NAME, TOKEN_SYMBOL, TOKEN_DECIMALS, TOKEN_SUPPLY, {'from': accounts[0]})
 
 	global FDT_INSTANCE
 	FDT_INSTANCE = tx1.new_contracts[0]
