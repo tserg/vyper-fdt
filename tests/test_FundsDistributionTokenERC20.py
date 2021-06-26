@@ -193,3 +193,120 @@ def test_different_IO_single_deposit_with_token_transfer(ERC20, accounts):
 
 	assert ERC20.balanceOf(fdt_instance) == 0
 	assert ERC20.balanceOf(accounts[1]) == account2_balance + 500
+
+def test_multiple_deposit_with_intervening_transfer_two_withdrawals(ERC20, accounts):
+	"""
+		Two addresses holding tokens.
+		One deposit is made.
+		One address withdraws.
+		Another deposit is made.
+		Both addresses withdraw.
+	"""
+	fdt_instance = FundsDistributionTokenERC20.at(FDT_INSTANCE)
+	FDT_transfer = fdt_instance.transfer(accounts[1], 40, {'from': accounts[0]})
+
+	assert FDT_transfer.events['Transfer']['sender'] == accounts[0]
+	assert FDT_transfer.events['Transfer']['receiver'] == accounts[1]
+	assert FDT_transfer.events['Transfer']['value'] == 40
+
+	payment1_1 = ERC20.transfer(accounts[1], 2000, {'from': accounts[0]})
+	payment1_2 = ERC20.approve(FundsDistributionTokenERC20[1], 2000, {'from': accounts[1]})
+	payment1_3 = FundsDistributionTokenERC20[1].payToContract(1000, {'from': accounts[1]})
+
+	assert ERC20.balanceOf(fdt_instance) == 1000
+
+	account1_balance1 = ERC20.balanceOf(accounts[0])
+
+	account1_withdrawa1 = fdt_instance.withdrawFunds({'from': accounts[0]})
+	assert account1_withdrawa1.events['FundsDistributed']['receiver'] == accounts[0]
+	assert account1_withdrawa1.events['FundsWithdrawn']['receiver'] == accounts[0]
+	assert account1_withdrawa1.events['FundsWithdrawn']['value'] == 600
+	assert ERC20.balanceOf(fdt_instance) == 400
+	assert ERC20.balanceOf(accounts[0]) == account1_balance1 + 600
+
+	payment2_1 = ERC20.approve(FundsDistributionTokenERC20[1], 1000, {'from': accounts[1]})
+	payment2_1 = FundsDistributionTokenERC20[1].payToContract(1000, {'from': accounts[1]})
+
+	assert ERC20.balanceOf(fdt_instance) == 1400
+
+	account2_balance = ERC20.balanceOf(accounts[1])
+
+	update_tx = fdt_instance.updateFundsTokenBalance({'from': accounts[0]})
+	assert update_tx.events['FundsDistributed']['receiver'] == accounts[0]
+	assert update_tx.events['FundsDistributed']['value'] == 1000
+
+
+	account2_withdrawa1 = fdt_instance.withdrawFunds({'from': accounts[1]})
+
+	assert account2_withdrawa1.events['FundsWithdrawn']['receiver'] == accounts[1]
+	assert account2_withdrawa1.events['FundsWithdrawn']['value'] == 800
+	assert ERC20.balanceOf(fdt_instance) == 600
+	assert ERC20.balanceOf(accounts[1]) == account2_balance + 800
+
+
+	account1_balance2 = ERC20.balanceOf(accounts[0])
+
+	account1_withdraw2 = fdt_instance.withdrawFunds({'from': accounts[0]})
+
+	assert account1_withdraw2.events['FundsWithdrawn']['receiver'] == accounts[0]
+	assert account1_withdraw2.events['FundsWithdrawn']['value'] == 600
+	assert ERC20.balanceOf(fdt_instance) == 0
+	assert ERC20.balanceOf(accounts[0]) == account1_balance2 + 600
+
+def test_multiple_deposit_lower_value_with_intervening_transfer_two_withdrawals(ERC20, accounts):
+	"""
+		Two addresses holding tokens.
+		One deposit is made.
+		One address withdraws.
+		Another deposit is made that results in contract balance < first deposit.
+		Both addresses withdraw.
+	"""
+	fdt_instance = FundsDistributionTokenERC20.at(FDT_INSTANCE)
+	FDT_transfer = fdt_instance.transfer(accounts[1], 40, {'from': accounts[0]})
+
+	assert FDT_transfer.events['Transfer']['sender'] == accounts[0]
+	assert FDT_transfer.events['Transfer']['receiver'] == accounts[1]
+	assert FDT_transfer.events['Transfer']['value'] == 40
+
+	payment1_1 = ERC20.transfer(accounts[1], 10000, {'from': accounts[0]})
+	payment1_2 = ERC20.approve(FundsDistributionTokenERC20[1], 10000, {'from': accounts[1]})
+	payment1_3 = FundsDistributionTokenERC20[1].payToContract(5000, {'from': accounts[1]})
+
+	assert ERC20.balanceOf(fdt_instance) == 5000
+
+	account1_balance1 = ERC20.balanceOf(accounts[0])
+
+	account1_withdraw1 = fdt_instance.withdrawFunds({'from': accounts[0]})
+	assert account1_withdraw1.events['FundsDistributed']['receiver'] == accounts[0]
+	assert account1_withdraw1.events['FundsWithdrawn']['receiver'] == accounts[0]
+	assert account1_withdraw1.events['FundsWithdrawn']['value'] == 3000
+	assert ERC20.balanceOf(fdt_instance) == 2000
+	assert ERC20.balanceOf(accounts[0]) == account1_balance1 + 3000
+
+
+	payment1 = FundsDistributionTokenERC20[1].payToContract(1000, {'from': accounts[1]})
+
+	assert ERC20.balanceOf(fdt_instance) == 3000
+
+	account2_balance = ERC20.balanceOf(accounts[1])
+
+	update_tx = fdt_instance.updateFundsTokenBalance({'from': accounts[0]})
+	assert update_tx.events['FundsDistributed']['receiver'] == accounts[0]
+	assert update_tx.events['FundsDistributed']['value'] == 1000
+
+	account2_withdraw1 = fdt_instance.withdrawFunds({'from': accounts[1]})
+
+	assert account2_withdraw1.events['FundsWithdrawn']['receiver'] == accounts[1]
+	assert account2_withdraw1.events['FundsWithdrawn']['value'] == 2400
+	assert ERC20.balanceOf(fdt_instance) == 600
+	assert ERC20.balanceOf(accounts[1]) == account2_balance + 2400
+
+
+	account1_balance2 = ERC20.balanceOf(accounts[0])
+
+	account1_withdraw2 = fdt_instance.withdrawFunds({'from': accounts[0]})
+
+	assert account1_withdraw2.events['FundsWithdrawn']['receiver'] == accounts[0]
+	assert account1_withdraw2.events['FundsWithdrawn']['value'] == 600
+	assert ERC20.balanceOf(fdt_instance) == 0
+	assert ERC20.balanceOf(accounts[0]) == account1_balance2 + 600
