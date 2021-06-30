@@ -40,6 +40,7 @@ def add_payment_token(_paymentTokenAddress: address):
     @param _paymentTokenAddress The address of the payment token to be added
 	"""
 	assert msg.sender == self.admin
+	assert self.acceptedPaymentTokenCount < 10
 
 	self.paymentTokens[_paymentTokenAddress] = True
 	self.acceptedPaymentTokenCount += 1
