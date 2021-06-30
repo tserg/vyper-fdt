@@ -61,8 +61,8 @@ def test_add_payment_token_to_first_governor(PaymentTokenGovernorProxyContract, 
 	assert PaymentTokenGovernorProxyContract.paymentTokenToIndex(PaymentToken.address) == 1
 	assert PaymentTokenGovernorProxyContract.check_payment_token_acceptance(PaymentToken.address) == True
 
-'''
-def test_add_two_payment_tokens(PaymentTokenGovernorContract, PaymentToken, NewPaymentToken, accounts):
+
+def test_add_two_payment_tokens_to_first_governor(PaymentTokenGovernorProxyContract, PaymentTokenGovernorContract, PaymentToken, NewPaymentToken, accounts):
 
 	tx1 = PaymentTokenGovernorContract.add_payment_token(PaymentToken.address, {'from': accounts[0]})
 
@@ -71,6 +71,11 @@ def test_add_two_payment_tokens(PaymentTokenGovernorContract, PaymentToken, NewP
 	assert PaymentTokenGovernorContract.acceptedPaymentTokens(1) == PaymentToken.address
 	assert PaymentTokenGovernorContract.paymentTokenToIndex(PaymentToken.address) == 1
 
+	assert PaymentTokenGovernorProxyContract.acceptedPaymentTokenCount() == 1
+	assert PaymentTokenGovernorProxyContract.acceptedPaymentTokens(1) == PaymentToken.address
+	assert PaymentTokenGovernorProxyContract.paymentTokenToIndex(PaymentToken.address) == 1
+	assert PaymentTokenGovernorProxyContract.check_payment_token_acceptance(PaymentToken.address) == True
+
 	tx2 = PaymentTokenGovernorContract.add_payment_token(NewPaymentToken.address, {'from': accounts[0]})
 
 	assert tx2.events['PaymentTokenAdded']['paymentTokenAddress'] == NewPaymentToken.address
@@ -78,7 +83,13 @@ def test_add_two_payment_tokens(PaymentTokenGovernorContract, PaymentToken, NewP
 	assert PaymentTokenGovernorContract.acceptedPaymentTokens(2) == NewPaymentToken.address
 	assert PaymentTokenGovernorContract.paymentTokenToIndex(NewPaymentToken.address) == 2
 
-def test_add_two_and_remove_one_payment_token(PaymentTokenGovernorContract, PaymentToken, NewPaymentToken, accounts):
+	assert PaymentTokenGovernorProxyContract.acceptedPaymentTokenCount() == 2
+	assert PaymentTokenGovernorProxyContract.acceptedPaymentTokens(2) == NewPaymentToken.address
+	assert PaymentTokenGovernorProxyContract.paymentTokenToIndex(NewPaymentToken.address) == 2
+	assert PaymentTokenGovernorProxyContract.check_payment_token_acceptance(NewPaymentToken.address) == True
+
+
+def test_add_two_and_remove_one_payment_token(PaymentTokenGovernorProxyContract, PaymentTokenGovernorContract, PaymentToken, NewPaymentToken, accounts):
 
 	tx1 = PaymentTokenGovernorContract.add_payment_token(PaymentToken.address, {'from': accounts[0]})
 
@@ -87,12 +98,22 @@ def test_add_two_and_remove_one_payment_token(PaymentTokenGovernorContract, Paym
 	assert PaymentTokenGovernorContract.acceptedPaymentTokens(1) == PaymentToken.address
 	assert PaymentTokenGovernorContract.paymentTokenToIndex(PaymentToken.address) == 1
 
+	assert PaymentTokenGovernorProxyContract.acceptedPaymentTokenCount() == 1
+	assert PaymentTokenGovernorProxyContract.acceptedPaymentTokens(1) == PaymentToken.address
+	assert PaymentTokenGovernorProxyContract.paymentTokenToIndex(PaymentToken.address) == 1
+	assert PaymentTokenGovernorProxyContract.check_payment_token_acceptance(PaymentToken.address) == True
+
 	tx2 = PaymentTokenGovernorContract.add_payment_token(NewPaymentToken.address, {'from': accounts[0]})
 
 	assert tx2.events['PaymentTokenAdded']['paymentTokenAddress'] == NewPaymentToken.address
 	assert PaymentTokenGovernorContract.acceptedPaymentTokenCount() == 2
 	assert PaymentTokenGovernorContract.acceptedPaymentTokens(2) == NewPaymentToken.address
 	assert PaymentTokenGovernorContract.paymentTokenToIndex(NewPaymentToken.address) == 2
+
+	assert PaymentTokenGovernorProxyContract.acceptedPaymentTokenCount() == 2
+	assert PaymentTokenGovernorProxyContract.acceptedPaymentTokens(2) == NewPaymentToken.address
+	assert PaymentTokenGovernorProxyContract.paymentTokenToIndex(NewPaymentToken.address) == 2
+	assert PaymentTokenGovernorProxyContract.check_payment_token_acceptance(NewPaymentToken.address) == True
 
 	tx3 = PaymentTokenGovernorContract.remove_payment_token(PaymentToken.address, {'from': accounts[0]})
 
@@ -101,4 +122,10 @@ def test_add_two_and_remove_one_payment_token(PaymentTokenGovernorContract, Paym
 	assert PaymentTokenGovernorContract.acceptedPaymentTokens(2) == ZERO_ADDRESS
 	assert PaymentTokenGovernorContract.paymentTokenToIndex(NewPaymentToken.address) == 1
 	assert PaymentTokenGovernorContract.paymentTokenToIndex(PaymentToken.address) == 0
-'''
+
+	assert PaymentTokenGovernorProxyContract.acceptedPaymentTokenCount() == 1
+	assert PaymentTokenGovernorProxyContract.acceptedPaymentTokens(1) == NewPaymentToken.address
+	assert PaymentTokenGovernorContract.acceptedPaymentTokens(2) == ZERO_ADDRESS
+	assert PaymentTokenGovernorProxyContract.paymentTokenToIndex(NewPaymentToken.address) == 1
+	assert PaymentTokenGovernorProxyContract.check_payment_token_acceptance(NewPaymentToken.address) == True
+	assert PaymentTokenGovernorProxyContract.check_payment_token_acceptance(PaymentToken.address) == False
