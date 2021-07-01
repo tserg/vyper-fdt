@@ -329,6 +329,9 @@ def updateFundsTokenBalance():
 		_paymentTokenGovernorAddress: address = self.paymentTokenGovernorProxy.paymentTokenGovernorAddress()
 		_currentPaymentTokenAddress: address = PaymentTokenGovernor(_paymentTokenGovernorAddress).acceptedPaymentTokens(i)
 
+		if _currentPaymentTokenAddress == ZERO_ADDRESS:
+			break
+
 		_newFunds: uint256 = self._updateFundsTokenBalance(_currentPaymentTokenAddress)
 
 		if _newFunds > 0:
