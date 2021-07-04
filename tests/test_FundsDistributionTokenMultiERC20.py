@@ -429,6 +429,97 @@ def test_same_IO_two_payment_tokens(PaymentToken, NewPaymentToken, PaymentTokenG
 	assert NewPaymentToken.balanceOf(fdt_instance) == 0
 	assert PaymentToken.balanceOf(accounts[0]) == account1_new_payment_token_balance + 1000
 
+def test_multiple_deposit_with_two_payment_tokens_and_intervening_transfer_two_withdrawals(PaymentToken, NewPaymentToken, PaymentTokenGovernorContract, accounts):
+	"""
+		Two addresses holding tokens.
+		One deposit is made using Payment Token.
+		One address withdraws.
+		Another deposit is made using Payment Token.
+		Another deposit is made using New Payment Token
+		Both addresses withdraw.
+	"""
+	fdt_instance = FundsDistributionTokenMultiERC20.at(FDT_INSTANCE)
+	FDT_transfer = fdt_instance.transfer(accounts[1], 40, {'from': accounts[0]})
+
+	assert FDT_transfer.events['Transfer']['sender'] == accounts[0]
+	assert FDT_transfer.events['Transfer']['receiver'] == accounts[1]
+	assert FDT_transfer.events['Transfer']['value'] == 40
+
+	payment1_1 = PaymentToken.transfer(accounts[1], 2000, {'from': accounts[0]})
+	payment1_2 = PaymentToken.approve(fdt_instance, 2000, {'from': accounts[1]})
+	payment1_3 = fdt_instance.payToContract(1000, PaymentToken, {'from': accounts[1]})
+
+	assert PaymentToken.balanceOf(fdt_instance) == 1000
+
+	account1_balance1 = PaymentToken.balanceOf(accounts[0])
+
+	account1_withdraw1 = fdt_instance.withdrawFunds({'from': accounts[0]})
+	assert account1_withdraw1.events['FundsDistributed']['receiver'] == accounts[0]
+	assert account1_withdraw1.events['FundsDistributed']['paymentToken'] == PaymentToken
+	assert account1_withdraw1.events['FundsWithdrawn']['receiver'] == accounts[0]
+	assert account1_withdraw1.events['FundsWithdrawn']['paymentToken'] == PaymentToken
+	assert account1_withdraw1.events['FundsWithdrawn']['value'] == 600
+	assert PaymentToken.balanceOf(fdt_instance) == 400
+	assert PaymentToken.balanceOf(accounts[0]) == account1_balance1 + 600
+
+	PaymentTokenGovernorContract.add_payment_token(NewPaymentToken, {'from': accounts[0]})
+
+	payment2_1 = PaymentToken.approve(fdt_instance, 1000, {'from': accounts[1]})
+	payment2_2 = fdt_instance.payToContract(1000, PaymentToken, {'from': accounts[1]})
+	payment2_3 = NewPaymentToken.approve(fdt_instance, 2000, {'from': accounts[0]})
+	payment2_4 = fdt_instance.payToContract(2000, NewPaymentToken, {'from': accounts[0]})
+
+	assert PaymentToken.balanceOf(fdt_instance) == 1400
+	assert NewPaymentToken.balanceOf(fdt_instance) == 2000
+
+	account2_payment_token_balance = PaymentToken.balanceOf(accounts[1])
+	account2_new_payment_token_balance = NewPaymentToken.balanceOf(accounts[1])
+
+	update_tx = fdt_instance.updateFundsTokenBalance({'from': accounts[0]})
+	assert len(update_tx.events) == 2
+	assert update_tx.events['FundsDistributed'][0]['receiver'] == accounts[0]
+	assert update_tx.events['FundsDistributed'][0]['paymentToken'] == PaymentToken
+	assert update_tx.events['FundsDistributed'][0]['value'] == 1000
+
+	assert update_tx.events['FundsDistributed'][1]['receiver'] == accounts[0]
+	assert update_tx.events['FundsDistributed'][1]['paymentToken'] == NewPaymentToken
+	assert update_tx.events['FundsDistributed'][1]['value'] == 2000
+
+
+	account2_withdraw1 = fdt_instance.withdrawFunds({'from': accounts[1]})
+
+	assert len(account2_withdraw1.events['FundsWithdrawn']) == 2
+	assert account2_withdraw1.events['FundsWithdrawn'][0]['receiver'] == accounts[1]
+	assert account2_withdraw1.events['FundsWithdrawn'][0]['paymentToken'] == PaymentToken
+	assert account2_withdraw1.events['FundsWithdrawn'][0]['value'] == 800
+	assert PaymentToken.balanceOf(fdt_instance) == 600
+	assert PaymentToken.balanceOf(accounts[1]) == account2_payment_token_balance + 800
+
+	assert account2_withdraw1.events['FundsWithdrawn'][1]['receiver'] == accounts[1]
+	assert account2_withdraw1.events['FundsWithdrawn'][1]['paymentToken'] == NewPaymentToken
+	assert account2_withdraw1.events['FundsWithdrawn'][1]['value'] == 800
+	assert NewPaymentToken.balanceOf(fdt_instance) == 1200
+	assert NewPaymentToken.balanceOf(accounts[1]) == account2_new_payment_token_balance + 800
+
+
+	account1_payment_token_balance_2 = PaymentToken.balanceOf(accounts[0])
+	account1_new_payment_token_balance = NewPaymentToken.balanceOf(accounts[0])
+
+	account1_withdraw2 = fdt_instance.withdrawFunds({'from': accounts[0]})
+
+	assert len(account1_withdraw2.events['FundsWithdrawn']) == 2
+	assert account1_withdraw2.events['FundsWithdrawn'][0]['receiver'] == accounts[0]
+	assert account1_withdraw2.events['FundsWithdrawn'][0]['paymentToken'] == PaymentToken
+	assert account1_withdraw2.events['FundsWithdrawn'][0]['value'] == 600
+	assert PaymentToken.balanceOf(fdt_instance) == 0
+	assert PaymentToken.balanceOf(accounts[0]) == account1_payment_token_balance_2 + 600
+
+	assert account1_withdraw2.events['FundsWithdrawn'][1]['receiver'] == accounts[0]
+	assert account1_withdraw2.events['FundsWithdrawn'][1]['paymentToken'] == NewPaymentToken
+	assert account1_withdraw2.events['FundsWithdrawn'][1]['value'] == 1200
+	assert NewPaymentToken.balanceOf(fdt_instance) == 0
+	assert NewPaymentToken.balanceOf(accounts[0]) == account1_new_payment_token_balance + 1200
+
 def test_payment_to_first_governor_and_switch_governor(PaymentToken, NewPaymentToken, PaymentTokenGovernorProxyContract, NewPaymentTokenGovernorContract, accounts):
 	"""
 		One address holds 100 FDT.
