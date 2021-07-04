@@ -73,12 +73,20 @@ def remove_payment_token(_paymentTokenAddress: address):
 	# Get last payment token
 	_lastPaymentToken: address = self.acceptedPaymentTokens[self.acceptedPaymentTokenCount]
 
-	# Swap position of current payment token and last payment token
-	self.acceptedPaymentTokens[_currentPaymentTokenIndex] = _lastPaymentToken
-	self.acceptedPaymentTokens[self.acceptedPaymentTokenCount] = ZERO_ADDRESS
+	if self.acceptedPaymentTokenCount == _currentPaymentTokenIndex:
+		# Set last index to ZERO_ADDRESS
+		self.acceptedPaymentTokens[_currentPaymentTokenIndex] = ZERO_ADDRESS
 
+	else:
+
+		# Swap position of current payment token and last payment token if payment token to be removed
+		# is not the last index
+		self.acceptedPaymentTokens[_currentPaymentTokenIndex] = _lastPaymentToken
+		self.acceptedPaymentTokens[self.acceptedPaymentTokenCount] = ZERO_ADDRESS
+		self.paymentTokenToIndex[_lastPaymentToken] = _currentPaymentTokenIndex
+
+	# Set index of payment token to be removed to 0
 	self.paymentTokenToIndex[_paymentTokenAddress] = 0
-	self.paymentTokenToIndex[_lastPaymentToken] = _currentPaymentTokenIndex
 
 	# Set last payment token to ZERO_ADDRESS
 	self.acceptedPaymentTokenCount -= 1
