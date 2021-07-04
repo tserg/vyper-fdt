@@ -25,6 +25,10 @@ paymentTokenToIndex: public(HashMap[address, uint256])
 # @dev Count of number of accepted tokens
 acceptedPaymentTokenCount: public(uint256)
 
+# @dev Maximum number of payment tokens to be added to governor
+maxPaymentTokens: uint256
+MAX_PAYMENT_TOKENS: constant(uint256) = 10
+
 @external
 def __init__():
 	"""
@@ -32,6 +36,7 @@ def __init__():
 	"""
 	self.admin = msg.sender
 	self.acceptedPaymentTokenCount = 0
+	self.maxPaymentTokens = MAX_PAYMENT_TOKENS
 
 @external
 def add_payment_token(_paymentTokenAddress: address):
@@ -40,7 +45,7 @@ def add_payment_token(_paymentTokenAddress: address):
     @param _paymentTokenAddress The address of the payment token to be added
 	"""
 	assert msg.sender == self.admin
-	assert self.acceptedPaymentTokenCount < 10
+	assert self.acceptedPaymentTokenCount < self.maxPaymentTokens
 
 	self.paymentTokens[_paymentTokenAddress] = True
 	self.acceptedPaymentTokenCount += 1
