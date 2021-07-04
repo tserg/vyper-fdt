@@ -18,7 +18,7 @@ interface FundsDistributionToken:
 
 event FundsDistributionTokenCreated:
 	fundsId: uint256
-	token: indexed(address)
+	token: address
 	name: String[64]
 	symbol: String[32]
 

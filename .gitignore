@@ -7,3 +7,5 @@ tests/__pycache__
 /scripts/__pycache__
 
 .env
+
+reports/

@@ -28,9 +28,7 @@ def test_deploy_fdt_from_factory(FDTFactoryContract, accounts):
 
 	global FDT_INSTANCE
 	FDT_INSTANCE = tx1.new_contracts[0]
-	assert tx1.events[0]['name'] == TOKEN_NAME
-	assert tx1.events[0]['symbol'] == TOKEN_SYMBOL
-
+	
 @pytest.fixture(autouse=True)
 def isolation(fn_isolation):
 	pass
