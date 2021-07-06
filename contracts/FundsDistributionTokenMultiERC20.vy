@@ -352,7 +352,7 @@ def withdrawnFundsOf(_receiver: address, _paymentTokenAddress: address) -> uint2
 @payable
 def payToContract(_amount: uint256, _paymentTokenAddress: address) -> bool:
 	_paymentTokenGovernorAddress: address = self.paymentTokenGovernorProxy.paymentTokenGovernorAddress()
-	assert PaymentTokenGovernor(_paymentTokenGovernorAddress).check_payment_token_acceptance(_paymentTokenAddress) == True
+	assert PaymentTokenGovernor(_paymentTokenGovernorAddress).check_payment_token_acceptance(_paymentTokenAddress) == True, "Token not accepted for payment"
 
 	assert ERC20(_paymentTokenAddress).allowance(msg.sender, self) >= _amount
 	ERC20(_paymentTokenAddress).transferFrom(msg.sender, self, _amount)
