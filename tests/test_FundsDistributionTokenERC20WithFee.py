@@ -198,7 +198,7 @@ def test_three_token_holders_single_deposit(PaymentToken, accounts):
 	assert tx5.events['FundsWithdrawn']['receiver'] == accounts[2]
 	assert PaymentToken.balanceOf(fdt_instance) == 5e18
 	assert PaymentToken.balanceOf(accounts[2]) == account3_balance + 173.25e18
-'''
+
 def test_different_IO_single_deposit_with_token_transfer(PaymentToken, accounts):
 
 	"""
@@ -206,10 +206,10 @@ def test_different_IO_single_deposit_with_token_transfer(PaymentToken, accounts)
 		Both withdraws.
 	"""
 	fdt_instance = FundsDistributionTokenERC20WithFee.at(FDT_INSTANCE)
-	tx1_2 = PaymentToken.approve(fdt_instance, 500, {'from': accounts[0]})
-	tx1_3 = fdt_instance.payToContract(500, {'from': accounts[0]})
+	tx1_2 = PaymentToken.approve(fdt_instance, 500e18, {'from': accounts[0]})
+	tx1_3 = fdt_instance.payToContract(500e18, {'from': accounts[0]})
 
-	assert PaymentToken.balanceOf(fdt_instance) == 500
+	assert PaymentToken.balanceOf(fdt_instance) == 500e18
 
 	update_tx = fdt_instance.updateFundsTokenBalance({'from': accounts[0]})
 	assert update_tx.events['FundsDistributed']['receiver'] == accounts[0]
@@ -223,16 +223,15 @@ def test_different_IO_single_deposit_with_token_transfer(PaymentToken, accounts)
 
 	account1_withdraw = fdt_instance.withdrawFunds({'from': accounts[0]})
 
-
 	assert account1_withdraw.events['FundsWithdrawn']['receiver'] == accounts[0]
 	assert account1_withdraw.events['FundsWithdrawn']['value'] == 0
-	assert PaymentToken.balanceOf(fdt_instance) == 500
+	assert PaymentToken.balanceOf(fdt_instance) == 500e18
 	assert PaymentToken.balanceOf(accounts[0]) == account1_balance
 
 	account2_withdraw = fdt_instance.withdrawFunds({'from': accounts[1]})
 
-	assert PaymentToken.balanceOf(fdt_instance) == 0
-	assert PaymentToken.balanceOf(accounts[1]) == account2_balance + 500
+	assert PaymentToken.balanceOf(fdt_instance) == 5e18
+	assert PaymentToken.balanceOf(accounts[1]) == account2_balance + 495e18
 
 def test_multiple_deposit_with_intervening_transfer_two_withdrawals(PaymentToken, accounts):
 	"""
@@ -249,39 +248,41 @@ def test_multiple_deposit_with_intervening_transfer_two_withdrawals(PaymentToken
 	assert FDT_transfer.events['Transfer']['receiver'] == accounts[1]
 	assert FDT_transfer.events['Transfer']['value'] == 40
 
-	payment1_1 = PaymentToken.transfer(accounts[1], 2000, {'from': accounts[0]})
-	payment1_2 = PaymentToken.approve(fdt_instance, 2000, {'from': accounts[1]})
-	payment1_3 = fdt_instance.payToContract(1000, {'from': accounts[1]})
+	payment1_1 = PaymentToken.transfer(accounts[1], 2000e18, {'from': accounts[0]})
+	payment1_2 = PaymentToken.approve(fdt_instance, 2000e18, {'from': accounts[1]})
+	payment1_3 = fdt_instance.payToContract(1000e18, {'from': accounts[1]})
 
-	assert PaymentToken.balanceOf(fdt_instance) == 1000
+	assert PaymentToken.balanceOf(fdt_instance) == 1000e18
 
 	account1_balance1 = PaymentToken.balanceOf(accounts[0])
 
 	account1_withdrawa1 = fdt_instance.withdrawFunds({'from': accounts[0]})
 	assert account1_withdrawa1.events['FundsDistributed']['receiver'] == accounts[0]
 	assert account1_withdrawa1.events['FundsWithdrawn']['receiver'] == accounts[0]
-	assert account1_withdrawa1.events['FundsWithdrawn']['value'] == 600
-	assert PaymentToken.balanceOf(fdt_instance) == 400
-	assert PaymentToken.balanceOf(accounts[0]) == account1_balance1 + 600
+	assert account1_withdrawa1.events['FundsWithdrawn']['value'] == 594e18
+	assert PaymentToken.balanceOf(fdt_instance) == 406e18
+	assert PaymentToken.balanceOf(accounts[0]) == account1_balance1 + 594e18
+	assert fdt_instance.adminFeeTokenBalance() == 10e18
 
-	payment2_1 = PaymentToken.approve(fdt_instance, 1000, {'from': accounts[1]})
-	payment2_1 = fdt_instance.payToContract(1000, {'from': accounts[1]})
+	payment2_1 = PaymentToken.approve(fdt_instance, 1000e18, {'from': accounts[1]})
+	payment2_1 = fdt_instance.payToContract(1000e18, {'from': accounts[1]})
 
-	assert PaymentToken.balanceOf(fdt_instance) == 1400
+	assert PaymentToken.balanceOf(fdt_instance) == 1406e18
+
 
 	account2_balance = PaymentToken.balanceOf(accounts[1])
 
 	update_tx = fdt_instance.updateFundsTokenBalance({'from': accounts[0]})
 	assert update_tx.events['FundsDistributed']['receiver'] == accounts[0]
-	assert update_tx.events['FundsDistributed']['value'] == 1000
-
+	assert update_tx.events['FundsDistributed']['value'] == 1000e18
+	assert fdt_instance.adminFeeTokenBalance() == 20e18
 
 	account2_withdrawa1 = fdt_instance.withdrawFunds({'from': accounts[1]})
 
 	assert account2_withdrawa1.events['FundsWithdrawn']['receiver'] == accounts[1]
-	assert account2_withdrawa1.events['FundsWithdrawn']['value'] == 800
-	assert PaymentToken.balanceOf(fdt_instance) == 600
-	assert PaymentToken.balanceOf(accounts[1]) == account2_balance + 800
+	assert account2_withdrawa1.events['FundsWithdrawn']['value'] == 792e18
+	assert PaymentToken.balanceOf(fdt_instance) == 614e18
+	assert PaymentToken.balanceOf(accounts[1]) == account2_balance + 792e18
 
 
 	account1_balance2 = PaymentToken.balanceOf(accounts[0])
@@ -289,9 +290,17 @@ def test_multiple_deposit_with_intervening_transfer_two_withdrawals(PaymentToken
 	account1_withdraw2 = fdt_instance.withdrawFunds({'from': accounts[0]})
 
 	assert account1_withdraw2.events['FundsWithdrawn']['receiver'] == accounts[0]
-	assert account1_withdraw2.events['FundsWithdrawn']['value'] == 600
+	assert account1_withdraw2.events['FundsWithdrawn']['value'] == 594e18
+	assert PaymentToken.balanceOf(fdt_instance) == 20e18
+	assert PaymentToken.balanceOf(accounts[0]) == account1_balance2 + 594e18
+
+	account_balance = PaymentToken.balanceOf(accounts[0])
+
+	withdraw_admin_fee = fdt_instance.withdrawAdminFee({'from': accounts[0]})
 	assert PaymentToken.balanceOf(fdt_instance) == 0
-	assert PaymentToken.balanceOf(accounts[0]) == account1_balance2 + 600
+	assert withdraw_admin_fee.events['AdminFeeWithdrawn']['beneficiary'] == accounts[0]
+	assert withdraw_admin_fee.events['AdminFeeWithdrawn']['value'] == 20e18
+	assert PaymentToken.balanceOf(accounts[0]) == account_balance + 20e18
 
 def test_multiple_deposit_lower_value_with_intervening_transfer_two_withdrawals(PaymentToken, accounts):
 	"""
@@ -308,38 +317,38 @@ def test_multiple_deposit_lower_value_with_intervening_transfer_two_withdrawals(
 	assert FDT_transfer.events['Transfer']['receiver'] == accounts[1]
 	assert FDT_transfer.events['Transfer']['value'] == 40
 
-	payment1_1 = PaymentToken.transfer(accounts[1], 10000, {'from': accounts[0]})
-	payment1_2 = PaymentToken.approve(fdt_instance, 10000, {'from': accounts[1]})
-	payment1_3 = fdt_instance.payToContract(5000, {'from': accounts[1]})
+	payment1_1 = PaymentToken.transfer(accounts[1], 10000e18, {'from': accounts[0]})
+	payment1_2 = PaymentToken.approve(fdt_instance, 10000e18, {'from': accounts[1]})
+	payment1_3 = fdt_instance.payToContract(5000e18, {'from': accounts[1]})
 
-	assert PaymentToken.balanceOf(fdt_instance) == 5000
+	assert PaymentToken.balanceOf(fdt_instance) == 5000e18
 
 	account1_balance1 = PaymentToken.balanceOf(accounts[0])
 
 	account1_withdraw1 = fdt_instance.withdrawFunds({'from': accounts[0]})
 	assert account1_withdraw1.events['FundsDistributed']['receiver'] == accounts[0]
 	assert account1_withdraw1.events['FundsWithdrawn']['receiver'] == accounts[0]
-	assert account1_withdraw1.events['FundsWithdrawn']['value'] == 3000
-	assert PaymentToken.balanceOf(fdt_instance) == 2000
-	assert PaymentToken.balanceOf(accounts[0]) == account1_balance1 + 3000
+	assert account1_withdraw1.events['FundsWithdrawn']['value'] == 2970e18
+	assert PaymentToken.balanceOf(fdt_instance) == 2030e18
+	assert PaymentToken.balanceOf(accounts[0]) == account1_balance1 + 2970e18
 
 
-	payment1 = fdt_instance.payToContract(1000, {'from': accounts[1]})
+	payment1 = fdt_instance.payToContract(1000e18, {'from': accounts[1]})
 
-	assert PaymentToken.balanceOf(fdt_instance) == 3000
+	assert PaymentToken.balanceOf(fdt_instance) == 3030e18
 
 	account2_balance = PaymentToken.balanceOf(accounts[1])
 
 	update_tx = fdt_instance.updateFundsTokenBalance({'from': accounts[0]})
 	assert update_tx.events['FundsDistributed']['receiver'] == accounts[0]
-	assert update_tx.events['FundsDistributed']['value'] == 1000
+	assert update_tx.events['FundsDistributed']['value'] == 1000e18
 
 	account2_withdraw1 = fdt_instance.withdrawFunds({'from': accounts[1]})
 
 	assert account2_withdraw1.events['FundsWithdrawn']['receiver'] == accounts[1]
-	assert account2_withdraw1.events['FundsWithdrawn']['value'] == 2400
-	assert PaymentToken.balanceOf(fdt_instance) == 600
-	assert PaymentToken.balanceOf(accounts[1]) == account2_balance + 2400
+	assert account2_withdraw1.events['FundsWithdrawn']['value'] == 2376e18
+	assert PaymentToken.balanceOf(fdt_instance) == 654e18
+	assert PaymentToken.balanceOf(accounts[1]) == account2_balance + 2376e18
 
 
 	account1_balance2 = PaymentToken.balanceOf(accounts[0])
@@ -347,17 +356,14 @@ def test_multiple_deposit_lower_value_with_intervening_transfer_two_withdrawals(
 	account1_withdraw2 = fdt_instance.withdrawFunds({'from': accounts[0]})
 
 	assert account1_withdraw2.events['FundsWithdrawn']['receiver'] == accounts[0]
-	assert account1_withdraw2.events['FundsWithdrawn']['value'] == 600
+	assert account1_withdraw2.events['FundsWithdrawn']['value'] == 594e18
+	assert PaymentToken.balanceOf(fdt_instance) == 60e18
+	assert PaymentToken.balanceOf(accounts[0]) == account1_balance2 + 594e18
+
+	account_balance = PaymentToken.balanceOf(accounts[0])
+
+	withdraw_admin_fee = fdt_instance.withdrawAdminFee({'from': accounts[0]})
 	assert PaymentToken.balanceOf(fdt_instance) == 0
-	assert PaymentToken.balanceOf(accounts[0]) == account1_balance2 + 600
-
-def test_change_payment_token(FDTERC20FactoryContract, NewPaymentToken, PaymentToken, accounts):
-	"""
-		Change payment token
-	"""
-
-	tx1 = FDTERC20FactoryContract.set_payment_token(NewPaymentToken.address, {'from': accounts[0]})
-
-	assert tx1.events['PaymentTokenUpdated']['previousPaymentToken'] == PaymentToken.address
-	assert tx1.events['PaymentTokenUpdated']['newPaymentToken'] == NewPaymentToken.address
-'''
+	assert withdraw_admin_fee.events['AdminFeeWithdrawn']['beneficiary'] == accounts[0]
+	assert withdraw_admin_fee.events['AdminFeeWithdrawn']['value'] == 60e18
+	assert PaymentToken.balanceOf(accounts[0]) == account_balance + 60e18
