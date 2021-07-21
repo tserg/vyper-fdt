@@ -11,6 +11,8 @@ implements: ERC20
 interface FeeGovernor:
 	def admin_fee() -> uint256: view
 
+	def beneficiary() -> address: view
+
 event Transfer:
     sender: indexed(address)
     receiver: indexed(address)
@@ -33,7 +35,7 @@ event FundsWithdrawn:
     receiver: indexed(address)
     value: uint256
 
-event AdminFeeDistributed:
+event AdminFeeWithdrawn:
 	beneficiary: indexed(address)
 	value: uint256
 
@@ -55,8 +57,6 @@ total_supply: uint256
 
 fundsTokenBalance: uint256
 adminFeeTokenBalance: public(uint256)
-
-beneficiary: address
 
 # @dev Cumulative balance of admin fees withdrawn
 withdrawnAdminFeeTokenBalance: uint256
@@ -83,8 +83,7 @@ def initialize(
 	_supply: uint256,
 	_ownerAddress: address,
 	_paymentTokenAddress: address,
-	_feeGovernor: address,
-	_beneficiary: address
+	_feeGovernor: address
 ) -> bool:
 	"""
 	@notice Initialize the contract
@@ -103,7 +102,6 @@ def initialize(
 	self.fundsTokenBalance = 0
 	self.paymentToken = ERC20(_paymentTokenAddress)
 	self.feeGovernor = FeeGovernor(_feeGovernor)
-	self.beneficiary = _beneficiary
 	log Transfer(ZERO_ADDRESS, _ownerAddress, _supply)
 
 	return True
@@ -304,8 +302,10 @@ def withdrawAdminFee():
 	_undistributedAdminFee: uint256 = self.adminFeeTokenBalance
 	self.adminFeeTokenBalance = 0
 	self.withdrawnAdminFeeTokenBalance += _undistributedAdminFee
-	self.paymentToken.transfer(self.beneficiary, _undistributedAdminFee)
-	log AdminFeeDistributed(self.beneficiary, _undistributedAdminFee)
+
+	_beneficiary: address = self.feeGovernor.beneficiary()
+	self.paymentToken.transfer(_beneficiary, _undistributedAdminFee)
+	log AdminFeeWithdrawn(_beneficiary, _undistributedAdminFee)
 
 @view
 @external

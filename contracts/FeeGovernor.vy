@@ -16,6 +16,9 @@ future_admin_fee: public(uint256)
 admin_action_deadline: uint256
 admin: address
 
+# @dev Address of beneficiary to send admin fees to
+beneficiary: public(address)
+
 @external
 def __init__(_admin_fee: uint256):
 	"""
@@ -24,6 +27,7 @@ def __init__(_admin_fee: uint256):
 	"""
 	self.admin = msg.sender
 	self.admin_fee = _admin_fee
+	self.beneficiary = msg.sender
 
 @external
 def commit_new_admin_fee(_new_admin_fee: uint256):

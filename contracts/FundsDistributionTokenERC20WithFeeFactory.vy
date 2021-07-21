@@ -14,8 +14,7 @@ interface FundsDistributionTokenERC20WithFee:
 		_supply: uint256,
 		_ownerAddress: address,
 		_paymentTokenAddress: address,
-		_feeGovernor: address,
-		_beneficiary: address
+		_feeGovernor: address
 	) -> bool: nonpayable
 
 event FundsDistributionTokenCreated:
@@ -38,15 +37,13 @@ fundsId: public(uint256)
 fundsIdToAddress: public(HashMap[uint256, address])
 paymentTokenAddress: public(address)
 feeGovernorAddress: public(address)
-beneficiary: public(address)
 
 @external
 def __init__(
 	_target: address,
 	_admin: address,
 	_paymentTokenAddress: address,
-	_feeGovernorAddress: address,
-	_beneficiary: address
+	_feeGovernorAddress: address
 ):
 	"""
 	@notice Constructor
@@ -57,7 +54,6 @@ def __init__(
 	self.fundsId = 0
 	self.paymentTokenAddress = _paymentTokenAddress
 	self.feeGovernorAddress = _feeGovernorAddress
-	self.beneficiary = _beneficiary
 
 @external
 def deploy_fdt_contract(
@@ -84,8 +80,7 @@ def deploy_fdt_contract(
 		_supply,
 		msg.sender,
 		self.paymentTokenAddress,
-		self.feeGovernorAddress,
-		self.beneficiary
+		self.feeGovernorAddress
 	)
 	self.fundsId += 1
 	self.fundsIdToAddress[self.fundsId] = _contract

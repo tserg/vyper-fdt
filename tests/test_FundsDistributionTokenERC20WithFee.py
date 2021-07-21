@@ -41,7 +41,7 @@ def FDTERC20Contract(FundsDistributionTokenERC20WithFee, accounts):
 
 @pytest.fixture(scope="module")
 def FDTERC20FactoryContract(PaymentToken, FDTERC20Contract, FundsDistributionTokenERC20WithFeeFactory, FeeGovernorContract, accounts):
-	yield FundsDistributionTokenERC20WithFeeFactory.deploy(FundsDistributionTokenERC20WithFee[0].address, accounts[0], PaymentToken.address, FeeGovernorContract.address, accounts[0], {'from': accounts[0]})
+	yield FundsDistributionTokenERC20WithFeeFactory.deploy(FundsDistributionTokenERC20WithFee[0].address, accounts[0], PaymentToken.address, FeeGovernorContract.address, {'from': accounts[0]})
 
 @pytest.fixture(scope="module", autouse=True)
 def test_deploy_fdt_from_factory(FDTERC20FactoryContract, PaymentToken, accounts):
@@ -85,6 +85,11 @@ def test_same_IO(PaymentToken, accounts):
 	assert tx3.events['FundsWithdrawn']['receiver'] == accounts[0]
 	assert PaymentToken.balanceOf(fdt_instance) == 5e18
 	assert PaymentToken.balanceOf(accounts[0]) == account_balance + 495e18
+
+	tx4 = fdt_instance.withdrawAdminFee({'from': accounts[0]})
+	assert PaymentToken.balanceOf(fdt_instance) == 0
+	assert tx4.events['AdminFeeWithdrawn']['beneficiary'] == accounts[0]
+	assert tx4.events['AdminFeeWithdrawn']['value'] == 5e18
 
 '''
 def test_different_IO_single_deposit(PaymentToken, accounts):
