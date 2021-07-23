@@ -40,3 +40,25 @@ def test_apply_new_fee(FeeGovernorContract, accounts):
 
 	assert tx2.events['newAdminFeeApplied']['new_admin_fee'] == 2e16
 	assert FeeGovernorContract.admin_fee() == 2e16
+
+def test_initial_beneficiary(FeeGovernorContract, accounts):
+
+	assert FeeGovernorContract.beneficiary() == accounts[0]
+
+def test_commit_and_apply_new_beneficiary(FeeGovernorContract, accounts):
+
+	tx1 = FeeGovernorContract.commit_new_beneficiary(accounts[1], {'from': accounts[0]})
+
+	assert tx1.events['newBeneficiaryCommitted']['beneficiary'] == accounts[1]
+	assert FeeGovernorContract.future_beneficiary() == accounts[1]
+	assert FeeGovernorContract.beneficiary() == accounts[0]
+
+	with reverts():
+		tx2 = FeeGovernorContract.apply_new_beneficiary({'from': accounts[0]})
+
+	chain.sleep(259200)
+
+	tx3 = FeeGovernorContract.apply_new_beneficiary({'from': accounts[0]})
+
+	assert tx3.events['newBeneficiaryApplied']['beneficiary'] == accounts[1]
+	assert FeeGovernorContract.beneficiary() == accounts[1]
