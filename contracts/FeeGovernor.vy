@@ -57,6 +57,7 @@ def commit_new_admin_fee(_new_admin_fee: uint256):
 	@param _new_admin_fee New admin fee
 	"""
 	assert msg.sender == self.admin
+	assert self.admin_fee_action_deadline == 0
 	assert _new_admin_fee != self.admin_fee
 
 	deadline: uint256 = block.timestamp + ADMIN_ACTIONS_DELAY
@@ -86,6 +87,7 @@ def commit_new_beneficiary(_new_beneficiary: address):
 	@param _new_beneficiary Address to send admin fee to
 	"""
 	assert msg.sender == self.admin
+	assert self.admin_beneficiary_action_deadline == 0
 	assert _new_beneficiary != ZERO_ADDRESS, "Beneficiary address cannot be zero address"
 	assert _new_beneficiary != self.beneficiary, "Beneficiary address cannot be existing beneficiary address"
 
