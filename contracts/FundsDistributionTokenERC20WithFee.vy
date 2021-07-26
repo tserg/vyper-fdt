@@ -9,6 +9,8 @@ from vyper.interfaces import ERC20
 implements: ERC20
 
 interface FeeGovernor:
+	def fee_denominator() -> uint256: view
+
 	def admin_fee() -> uint256: view
 
 	def beneficiary() -> address: view
@@ -233,19 +235,20 @@ def _withdrawableFundsOf(_receiver: address) -> uint256:
 
 @internal
 def _distributeFunds(_triggerer: address, _value: uint256):
-    """
-    @dev Distribute funds which have not been distributed
-    @param _value The amount that will be distributed
-    """
-    assert self.total_supply > 0
+	"""
+	@dev Distribute funds which have not been distributed
+	@param _value The amount that will be distributed
+	"""
+	assert self.total_supply > 0
 
-    if _value > 0:
-	    _adminFee: uint256 = self.feeGovernor.admin_fee()
-	    _currentAdminFee: uint256 = _value / _adminFee
-	    self.adminFeeTokenBalance += _currentAdminFee
+	if _value > 0:
+		_feeDenominator: uint256 = self.feeGovernor.fee_denominator()
+		_adminFee: uint256 = self.feeGovernor.admin_fee()
+		_currentAdminFee: uint256 = _value * _adminFee / _feeDenominator
+		self.adminFeeTokenBalance += _currentAdminFee
 
-	    self.pointsPerShare += (_value - _currentAdminFee) / self.total_supply
-	    log FundsDistributed(_triggerer, _value)
+		self.pointsPerShare += (_value - _currentAdminFee) / self.total_supply
+		log FundsDistributed(_triggerer, _value)
 
 @internal
 def _updateFundsTokenBalance() -> uint256:

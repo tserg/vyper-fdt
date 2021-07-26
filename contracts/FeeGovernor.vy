@@ -17,8 +17,14 @@ event newBeneficiaryApplied:
 
 ADMIN_ACTIONS_DELAY: constant(uint256) = 3 * 86400
 
+FEE_DENOMINATOR: constant(uint256) = 10 ** 10
+MAX_ADMIN_FEE: constant(uint256) = 10 ** 10
+
 # @dev Address of admin of contract
 admin: address
+
+# @dev Fee denominator
+fee_denominator: public(uint256)
 
 # @dev Current admin fee
 admin_fee: public(uint256)
@@ -46,6 +52,9 @@ def __init__(_admin_fee: uint256):
 	@notice Contract constructor
 	@param _admin_fee Admin fee
 	"""
+	assert _admin_fee <= MAX_ADMIN_FEE
+
+	self.fee_denominator = FEE_DENOMINATOR
 	self.admin = msg.sender
 	self.admin_fee = _admin_fee
 	self.beneficiary = msg.sender
@@ -57,6 +66,7 @@ def commit_new_admin_fee(_new_admin_fee: uint256):
 	@param _new_admin_fee New admin fee
 	"""
 	assert msg.sender == self.admin
+	assert _new_admin_fee <= MAX_ADMIN_FEE
 	assert self.admin_fee_action_deadline == 0
 	assert _new_admin_fee != self.admin_fee
 

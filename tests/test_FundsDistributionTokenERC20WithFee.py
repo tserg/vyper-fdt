@@ -33,7 +33,7 @@ def NewPaymentToken(ERC20, accounts):
 
 @pytest.fixture(scope="module")
 def FeeGovernorContract(FeeGovernor, accounts):
-	yield FeeGovernor.deploy(1e2, {'from': accounts[0]})
+	yield FeeGovernor.deploy(1e8, {'from': accounts[0]})
 
 @pytest.fixture(scope="module")
 def FDTERC20Contract(FundsDistributionTokenERC20WithFee, accounts):

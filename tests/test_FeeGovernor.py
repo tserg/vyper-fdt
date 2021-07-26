@@ -9,14 +9,14 @@ from brownie import (
 
 @pytest.fixture(scope="module")
 def FeeGovernorContract(FeeGovernor, accounts):
-	yield FeeGovernor.deploy(1e16, {'from': accounts[0]})
+	yield FeeGovernor.deploy(1e8, {'from': accounts[0]})
 
 @pytest.fixture(scope="module", autouse=True)
 def test_commit_new_fee(FeeGovernorContract, accounts):
 
-	tx1 = FeeGovernorContract.commit_new_admin_fee(2e16, {'from': accounts[0]})
+	tx1 = FeeGovernorContract.commit_new_admin_fee(2e8, {'from': accounts[0]})
 
-	assert tx1.events['newAdminFeeCommitted']['new_admin_fee'] == 2e16
+	assert tx1.events['newAdminFeeCommitted']['new_admin_fee'] == 2e8
 
 @pytest.fixture(autouse=True)
 def isolation(fn_isolation):
@@ -25,11 +25,11 @@ def isolation(fn_isolation):
 
 def test_initial_fee(FeeGovernorContract):
 
-	assert FeeGovernorContract.admin_fee() == 1e16
+	assert FeeGovernorContract.admin_fee() == 1e8
 
 def test_apply_new_fee(FeeGovernorContract, accounts):
 
-	assert FeeGovernorContract.future_admin_fee() == 2e16
+	assert FeeGovernorContract.future_admin_fee() == 2e8
 
 	with reverts():
 		tx1 = FeeGovernorContract.apply_new_admin_fee({'from': accounts[0]})
@@ -38,8 +38,8 @@ def test_apply_new_fee(FeeGovernorContract, accounts):
 
 	tx2 = FeeGovernorContract.apply_new_admin_fee({'from': accounts[0]})
 
-	assert tx2.events['newAdminFeeApplied']['new_admin_fee'] == 2e16
-	assert FeeGovernorContract.admin_fee() == 2e16
+	assert tx2.events['newAdminFeeApplied']['new_admin_fee'] == 2e8
+	assert FeeGovernorContract.admin_fee() == 2e8
 
 def test_initial_beneficiary(FeeGovernorContract, accounts):
 
