@@ -2,6 +2,7 @@ import pytest
 
 from brownie import (
 	accounts,
+	chain,
 	ERC20,
 	PaymentTokenGovernor
 )
@@ -36,53 +37,59 @@ def isolation(fn_isolation):
 
 def test_initial_state(PaymentTokenGovernorContract, accounts):
 
-	assert PaymentTokenGovernorContract.acceptedPaymentTokenCount() == 0
+	assert PaymentTokenGovernorContract.accepted_payment_token_count() == 0
 
 def test_add_payment_token(PaymentTokenGovernorContract, PaymentToken, accounts):
 
 	tx1 = PaymentTokenGovernorContract.add_payment_token(PaymentToken.address, {'from': accounts[0]})
 
 	assert tx1.events['PaymentTokenAdded']['paymentTokenAddress'] == PaymentToken.address
-	assert PaymentTokenGovernorContract.acceptedPaymentTokenCount() == 1
-	assert PaymentTokenGovernorContract.acceptedPaymentTokens(1) == PaymentToken.address
-	assert PaymentTokenGovernorContract.paymentTokenToIndex(PaymentToken.address) == 1
+	assert PaymentTokenGovernorContract.accepted_payment_token_count() == 1
+	assert PaymentTokenGovernorContract.accepted_payment_tokens(1) == PaymentToken.address
+	assert PaymentTokenGovernorContract.payment_token_to_index(PaymentToken.address) == 1
 
 def test_add_two_payment_tokens(PaymentTokenGovernorContract, PaymentToken, NewPaymentToken, accounts):
 
 	tx1 = PaymentTokenGovernorContract.add_payment_token(PaymentToken.address, {'from': accounts[0]})
 
 	assert tx1.events['PaymentTokenAdded']['paymentTokenAddress'] == PaymentToken.address
-	assert PaymentTokenGovernorContract.acceptedPaymentTokenCount() == 1
-	assert PaymentTokenGovernorContract.acceptedPaymentTokens(1) == PaymentToken.address
-	assert PaymentTokenGovernorContract.paymentTokenToIndex(PaymentToken.address) == 1
+	assert PaymentTokenGovernorContract.accepted_payment_token_count() == 1
+	assert PaymentTokenGovernorContract.accepted_payment_tokens(1) == PaymentToken.address
+	assert PaymentTokenGovernorContract.payment_token_to_index(PaymentToken.address) == 1
 
 	tx2 = PaymentTokenGovernorContract.add_payment_token(NewPaymentToken.address, {'from': accounts[0]})
 
 	assert tx2.events['PaymentTokenAdded']['paymentTokenAddress'] == NewPaymentToken.address
-	assert PaymentTokenGovernorContract.acceptedPaymentTokenCount() == 2
-	assert PaymentTokenGovernorContract.acceptedPaymentTokens(2) == NewPaymentToken.address
-	assert PaymentTokenGovernorContract.paymentTokenToIndex(NewPaymentToken.address) == 2
+	assert PaymentTokenGovernorContract.accepted_payment_token_count() == 2
+	assert PaymentTokenGovernorContract.accepted_payment_tokens(2) == NewPaymentToken.address
+	assert PaymentTokenGovernorContract.payment_token_to_index(NewPaymentToken.address) == 2
 
 def test_add_two_and_remove_one_payment_token(PaymentTokenGovernorContract, PaymentToken, NewPaymentToken, accounts):
 
 	tx1 = PaymentTokenGovernorContract.add_payment_token(PaymentToken.address, {'from': accounts[0]})
 
 	assert tx1.events['PaymentTokenAdded']['paymentTokenAddress'] == PaymentToken.address
-	assert PaymentTokenGovernorContract.acceptedPaymentTokenCount() == 1
-	assert PaymentTokenGovernorContract.acceptedPaymentTokens(1) == PaymentToken.address
-	assert PaymentTokenGovernorContract.paymentTokenToIndex(PaymentToken.address) == 1
+	assert PaymentTokenGovernorContract.accepted_payment_token_count() == 1
+	assert PaymentTokenGovernorContract.accepted_payment_tokens(1) == PaymentToken.address
+	assert PaymentTokenGovernorContract.payment_token_to_index(PaymentToken.address) == 1
 
 	tx2 = PaymentTokenGovernorContract.add_payment_token(NewPaymentToken.address, {'from': accounts[0]})
 
 	assert tx2.events['PaymentTokenAdded']['paymentTokenAddress'] == NewPaymentToken.address
-	assert PaymentTokenGovernorContract.acceptedPaymentTokenCount() == 2
-	assert PaymentTokenGovernorContract.acceptedPaymentTokens(2) == NewPaymentToken.address
-	assert PaymentTokenGovernorContract.paymentTokenToIndex(NewPaymentToken.address) == 2
+	assert PaymentTokenGovernorContract.accepted_payment_token_count() == 2
+	assert PaymentTokenGovernorContract.accepted_payment_tokens(2) == NewPaymentToken.address
+	assert PaymentTokenGovernorContract.payment_token_to_index(NewPaymentToken.address) == 2
 
-	tx3 = PaymentTokenGovernorContract.remove_payment_token(PaymentToken.address, {'from': accounts[0]})
+	tx3 = PaymentTokenGovernorContract.commit_remove_payment_token(PaymentToken.address, {'from': accounts[0]})
 
-	assert tx3.events['PaymentTokenRemoved']['paymentTokenAddress'] == PaymentToken.address
-	assert PaymentTokenGovernorContract.acceptedPaymentTokenCount() == 1
-	assert PaymentTokenGovernorContract.acceptedPaymentTokens(2) == ZERO_ADDRESS
-	assert PaymentTokenGovernorContract.paymentTokenToIndex(NewPaymentToken.address) == 1
-	assert PaymentTokenGovernorContract.paymentTokenToIndex(PaymentToken.address) == 0
+	assert tx3.events['RemovePaymentTokenCommitted']['paymentTokenAddress'] == PaymentToken.address
+
+	chain.sleep(259200)
+
+	tx4 = PaymentTokenGovernorContract.apply_remove_payment_token()
+
+	assert tx4.events['PaymentTokenRemoved']['paymentTokenAddress'] == PaymentToken.address
+	assert PaymentTokenGovernorContract.accepted_payment_token_count() == 1
+	assert PaymentTokenGovernorContract.accepted_payment_tokens(2) == ZERO_ADDRESS
+	assert PaymentTokenGovernorContract.payment_token_to_index(NewPaymentToken.address) == 1
+	assert PaymentTokenGovernorContract.payment_token_to_index(PaymentToken.address) == 0

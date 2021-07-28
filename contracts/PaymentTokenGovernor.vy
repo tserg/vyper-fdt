@@ -8,25 +8,33 @@ from vyper.interfaces import ERC20
 event PaymentTokenAdded:
 	paymentTokenAddress: indexed(address)
 
+event RemovePaymentTokenCommitted:
+	paymentTokenAddress: indexed(address)
+
 event PaymentTokenRemoved:
 	paymentTokenAddress: indexed(address)
 
 admin: address
 
+ADMIN_ACTIONS_DELAY: constant(uint256) = 3 * 86400
+
 # @dev Mapping of payment token to whether it is accepted
-paymentTokens: public(HashMap[address, bool])
+payment_tokens: public(HashMap[address, bool])
 
 # @dev Mapping of index to accepted payment tokens
-acceptedPaymentTokens: public(HashMap[uint256, address])
+accepted_payment_tokens: public(HashMap[uint256, address])
 
-# @dev Mapping of payment token to current index in acceptedPaymentTokens
-paymentTokenToIndex: public(HashMap[address, uint256])
+# @dev Mapping of payment token to current index in accepted_payment_tokens
+payment_token_to_index: public(HashMap[address, uint256])
 
 # @dev Count of number of accepted tokens
-acceptedPaymentTokenCount: public(uint256)
+accepted_payment_token_count: public(uint256)
+
+# @dev Mapping of payment token committed for removal to admin action deadline
+admin_remove_payment_token_deadline: HashMap[address, uint256]
 
 # @dev Maximum number of payment tokens to be added to governor
-maxPaymentTokens: uint256
+max_payment_tokens: uint256
 MAX_PAYMENT_TOKENS: constant(uint256) = 10
 
 @external
@@ -35,69 +43,104 @@ def __init__():
 	@notice Constructor
 	"""
 	self.admin = msg.sender
-	self.acceptedPaymentTokenCount = 0
-	self.maxPaymentTokens = MAX_PAYMENT_TOKENS
+	self.accepted_payment_token_count = 0
+	self.max_payment_tokens = MAX_PAYMENT_TOKENS
 
 @external
-def add_payment_token(_paymentTokenAddress: address):
+def add_payment_token(_payment_token: address):
 	"""
 	@dev Function to add a payment token
-    @param _paymentTokenAddress The address of the payment token to be added
+    @param _payment_token The address of the payment token to be added
 	"""
 	assert msg.sender == self.admin
-	assert self.acceptedPaymentTokenCount < self.maxPaymentTokens
+	assert self.accepted_payment_token_count < self.max_payment_tokens
 
-	self.paymentTokens[_paymentTokenAddress] = True
-	self.acceptedPaymentTokenCount += 1
-	self.acceptedPaymentTokens[self.acceptedPaymentTokenCount] = _paymentTokenAddress
-	self.paymentTokenToIndex[_paymentTokenAddress] = self.acceptedPaymentTokenCount
+	self.payment_tokens[_payment_token] = True
+	self.accepted_payment_token_count += 1
+	self.accepted_payment_tokens[self.accepted_payment_token_count] = _payment_token
+	self.payment_token_to_index[_payment_token] = self.accepted_payment_token_count
 
-	log PaymentTokenAdded(_paymentTokenAddress)
+	log PaymentTokenAdded(_payment_token)
 
 @external
-def remove_payment_token(_paymentTokenAddress: address):
+def commit_remove_payment_token(_payment_token: address):
 	"""
-	@dev Function to remove a payment token
-	@param _paymentTokenAddress The address of the payment token to be removed
+	@notice Remove payment token
+	@param _payment_token Address of payment token to be removed
 	"""
 	assert msg.sender == self.admin
+	assert self.payment_tokens[_payment_token] == True
+	assert self.payment_token_to_index[_payment_token] != 0
 
-	assert self.paymentTokens[_paymentTokenAddress] == True
-	assert self.paymentTokenToIndex[_paymentTokenAddress] != 0
+	deadline: uint256 = block.timestamp + ADMIN_ACTIONS_DELAY
 
-	self.paymentTokens[_paymentTokenAddress] = False
+	self.admin_remove_payment_token_deadline[_payment_token] = deadline
+
+	log RemovePaymentTokenCommitted(_payment_token)
+
+@internal
+def _remove_payment_token(_payment_token: address):
+	"""
+	@dev Function to remove a payment token
+	@param _payment_token The address of the payment token to be removed
+	"""
+
+	self.payment_tokens[_payment_token] = False
 
 	# Get index of last payment token to swap
-	_currentPaymentTokenIndex: uint256 = self.paymentTokenToIndex[_paymentTokenAddress]
+	_currentPaymentTokenIndex: uint256 = self.payment_token_to_index[_payment_token]
 
 	# Get last payment token
-	_lastPaymentToken: address = self.acceptedPaymentTokens[self.acceptedPaymentTokenCount]
+	_lastPaymentToken: address = self.accepted_payment_tokens[self.accepted_payment_token_count]
 
-	if self.acceptedPaymentTokenCount == _currentPaymentTokenIndex:
+	if self.accepted_payment_token_count == _currentPaymentTokenIndex:
 		# Set last index to ZERO_ADDRESS
-		self.acceptedPaymentTokens[_currentPaymentTokenIndex] = ZERO_ADDRESS
+		self.accepted_payment_tokens[_currentPaymentTokenIndex] = ZERO_ADDRESS
 
 	else:
 
 		# Swap position of current payment token and last payment token if payment token to be removed
 		# is not the last index
-		self.acceptedPaymentTokens[_currentPaymentTokenIndex] = _lastPaymentToken
-		self.acceptedPaymentTokens[self.acceptedPaymentTokenCount] = ZERO_ADDRESS
-		self.paymentTokenToIndex[_lastPaymentToken] = _currentPaymentTokenIndex
+		self.accepted_payment_tokens[_currentPaymentTokenIndex] = _lastPaymentToken
+		self.accepted_payment_tokens[self.accepted_payment_token_count] = ZERO_ADDRESS
+		self.payment_token_to_index[_lastPaymentToken] = _currentPaymentTokenIndex
 
 	# Set index of payment token to be removed to 0
-	self.paymentTokenToIndex[_paymentTokenAddress] = 0
+	self.payment_token_to_index[_payment_token] = 0
 
 	# Set last payment token to ZERO_ADDRESS
-	self.acceptedPaymentTokenCount -= 1
+	self.accepted_payment_token_count -= 1
 
-	log PaymentTokenRemoved(_paymentTokenAddress)
+	# Set admin action deadline for payment token to 0
+	self.admin_remove_payment_token_deadline[_payment_token] = 0
+
+	log PaymentTokenRemoved(_payment_token)
+
+@external
+def apply_remove_payment_token():
+	"""
+	@notice Remove all payment tokens that have been committed for removal
+	"""
+	for i in range(10):
+
+		if i > self.max_payment_tokens:
+			break
+
+		_payment_token: address = self.accepted_payment_tokens[i]
+		_payment_token_remove_deadline: uint256 = self.admin_remove_payment_token_deadline[_payment_token]
+
+		if _payment_token_remove_deadline == 0:
+			continue
+
+		if _payment_token_remove_deadline > 0 and block.timestamp >= _payment_token_remove_deadline:
+			self._remove_payment_token(_payment_token)
+
 
 @view
 @external
-def check_payment_token_acceptance(_paymentTokenAddress: address) -> bool:
+def check_payment_token_acceptance(_payment_token: address) -> bool:
 	"""
 	@dev Function to check if payment token is accepted
 	@return Boolean value indicating True if payment token is accepted. Otherwise, False.
 	"""
-	return self.paymentTokens[_paymentTokenAddress]
+	return self.payment_tokens[_payment_token]
