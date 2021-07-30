@@ -24,7 +24,7 @@ MAX_ADMIN_FEE: constant(uint256) = 10 ** 10
 admin: address
 
 # @dev Fee denominator
-fee_denominator: public(uint256)
+fee_denominator: uint256
 
 # @dev Current admin fee
 admin_fee: public(uint256)
