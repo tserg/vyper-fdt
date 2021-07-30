@@ -15,13 +15,24 @@ interface PaymentTokenGovernor:
 		_paymentTokenAddress: address
 	) -> uint256: view
 
+event NewPaymentTokenGovernorCommitted:
+	newGovernor: indexed(address)
+
 event PaymentTokenGovernorUpdated:
 	oldGovernor: indexed(address)
 	newGovernor: indexed(address)
 
+ADMIN_ACTIONS_DELAY: constant(uint256) = 3 * 86400
+
 payment_token_governor_address: public(address)
+future_payment_token_governor_address: public(address)
+
 current_payment_token_governor: PaymentTokenGovernor
+
 admin: address
+
+# @dev Mapping of payment token committed for removal to admin action deadline
+admin_change_payment_token_governor_deadline: uint256
 
 @external
 def __init__(_payment_token_governor_address: address):
@@ -30,19 +41,40 @@ def __init__(_payment_token_governor_address: address):
 	self.current_payment_token_governor = PaymentTokenGovernor(_payment_token_governor_address)
 
 @external
-def set_payment_token_governor(_address: address):
+def commit_change_payment_token_governor(_address: address):
 	"""
-	@notice Set the payment token governor address for FDT contracts
+	@notice Commit to set the payment token governor address for FDT contracts
 	@param _address Address of the payment token governer
 	"""
 	# Check that caller is admin
 	assert msg.sender == self.admin
-	_previouspayment_token_governor_address: address = self.payment_token_governor_address
+	assert self.future_payment_token_governor_address == ZERO_ADDRESS
+	assert self.admin_change_payment_token_governor_deadline == 0
 
-	self.payment_token_governor_address = _address
-	self.current_payment_token_governor = PaymentTokenGovernor(_address)
+	_deadline: uint256 = block.timestamp + ADMIN_ACTIONS_DELAY
 
-	log PaymentTokenGovernorUpdated(_previouspayment_token_governor_address, _address)
+	self.future_payment_token_governor_address = _address
+	self.admin_change_payment_token_governor_deadline = _deadline
+
+	log NewPaymentTokenGovernorCommitted(_address)
+
+@external
+def apply_change_payment_token_governor():
+	"""
+	@notice Change to the future payment token governor address for FDT contracts
+	"""
+	# Check that caller is admin
+	assert msg.sender == self.admin
+	assert block.timestamp >= self.admin_change_payment_token_governor_deadline
+
+	_previous_payment_token_governor_address: address = self.payment_token_governor_address
+
+	self.payment_token_governor_address = self.future_payment_token_governor_address
+	self.current_payment_token_governor = PaymentTokenGovernor(self.payment_token_governor_address)
+	self.future_payment_token_governor_address = ZERO_ADDRESS
+	self.admin_change_payment_token_governor_deadline = 0
+
+	log PaymentTokenGovernorUpdated(_previous_payment_token_governor_address, self.payment_token_governor_address)
 
 @external
 @view

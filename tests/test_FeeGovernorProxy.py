@@ -12,6 +12,10 @@ from brownie import (
 def FeeGovernorContract(FeeGovernor, accounts):
 	yield FeeGovernor.deploy(1e8, {'from': accounts[0]})
 
+@pytest.fixture(scope="module")
+def NewFeeGovernorContract(FeeGovernor, accounts):
+	yield FeeGovernor.deploy(3e8, {'from': accounts[0]})
+
 @pytest.fixture(scope="module", autouse=True)
 def FeeGovernorProxyContract(FeeGovernorContract, accounts):
 	yield FeeGovernorProxy.deploy(FeeGovernorContract, {'from': accounts[0]})
