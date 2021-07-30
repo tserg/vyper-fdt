@@ -5,13 +5,13 @@ interface PaymentTokenGovernor:
 		_paymentTokenAddress: address
 	) -> bool: view
 
-	def acceptedPaymentTokenCount() -> uint256: view
+	def accepted_payment_token_count() -> uint256: view
 
-	def acceptedPaymentTokens(
+	def accepted_payment_tokens(
 		_index: uint256
 	) -> address: view
 
-	def paymentTokenToIndex(
+	def payment_token_to_index(
 		_paymentTokenAddress: address
 	) -> uint256: view
 
@@ -19,15 +19,15 @@ event PaymentTokenGovernorUpdated:
 	oldGovernor: indexed(address)
 	newGovernor: indexed(address)
 
-paymentTokenGovernorAddress: public(address)
-currentPaymentTokenGovernor: PaymentTokenGovernor
+payment_token_governor_address: public(address)
+current_payment_token_governor: PaymentTokenGovernor
 admin: address
 
 @external
-def __init__(_paymentTokenGovernorAddress: address):
-	self.paymentTokenGovernorAddress = _paymentTokenGovernorAddress
+def __init__(_payment_token_governor_address: address):
+	self.payment_token_governor_address = _payment_token_governor_address
 	self.admin = msg.sender
-	self.currentPaymentTokenGovernor = PaymentTokenGovernor(_paymentTokenGovernorAddress)
+	self.current_payment_token_governor = PaymentTokenGovernor(_payment_token_governor_address)
 
 @external
 def set_payment_token_governor(_address: address):
@@ -37,12 +37,12 @@ def set_payment_token_governor(_address: address):
 	"""
 	# Check that caller is admin
 	assert msg.sender == self.admin
-	_previousPaymentTokenGovernorAddress: address = self.paymentTokenGovernorAddress
+	_previouspayment_token_governor_address: address = self.payment_token_governor_address
 
-	self.paymentTokenGovernorAddress = _address
-	self.currentPaymentTokenGovernor = PaymentTokenGovernor(_address)
+	self.payment_token_governor_address = _address
+	self.current_payment_token_governor = PaymentTokenGovernor(_address)
 
-	log PaymentTokenGovernorUpdated(_previousPaymentTokenGovernorAddress, _address)
+	log PaymentTokenGovernorUpdated(_previouspayment_token_governor_address, _address)
 
 @external
 @view
@@ -51,31 +51,31 @@ def check_payment_token_acceptance(_paymentTokenAddress: address) -> bool:
 	@dev Function to check if payment token is accepted by current PaymentTokenGovernor
 	@return Boolean value indicating True if payment token is accepted. Otherwise, False.
 	"""
-	return self.currentPaymentTokenGovernor.check_payment_token_acceptance(_paymentTokenAddress)
+	return self.current_payment_token_governor.check_payment_token_acceptance(_paymentTokenAddress)
 
 @external
 @view
-def acceptedPaymentTokenCount() -> uint256:
+def get_accepted_payment_token_count() -> uint256:
 	"""
 	@dev Get count of accepted payment tokens from current PaymentTokenGovernor
 	@return Integer value for number of payment tokens accepted
 	"""
-	return self.currentPaymentTokenGovernor.acceptedPaymentTokenCount()
+	return self.current_payment_token_governor.accepted_payment_token_count()
 
 @external
 @view
-def acceptedPaymentTokens(_index: uint256) -> address:
+def get_accepted_payment_tokens(_index: uint256) -> address:
 	"""
 	@dev Get accepted payment token by index from current PaymentTokenGovernor
 	@return Address of payment token at given index
 	"""
-	return self.currentPaymentTokenGovernor.acceptedPaymentTokens(_index)
+	return self.current_payment_token_governor.accepted_payment_tokens(_index)
 
 @external
 @view
-def paymentTokenToIndex(_paymentTokenAddress: address) -> uint256:
+def get_payment_token_to_index(_paymentTokenAddress: address) -> uint256:
 	"""
 	@dev Get index of a payment token from current PaymentTokenGovernor
 	@return Given index of payment token in current PaymentTokenGovernor. Returns 0 if it does not exist.
 	"""
-	return self.currentPaymentTokenGovernor.paymentTokenToIndex(_paymentTokenAddress)
+	return self.current_payment_token_governor.payment_token_to_index(_paymentTokenAddress)
