@@ -31,7 +31,7 @@ current_payment_token_governor: PaymentTokenGovernor
 
 admin: address
 
-# @dev Mapping of payment token committed for removal to admin action deadline
+# @dev Admin action deadline
 admin_change_payment_token_governor_deadline: uint256
 
 @external
