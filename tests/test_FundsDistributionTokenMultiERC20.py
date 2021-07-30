@@ -2,6 +2,7 @@ import pytest
 
 from brownie import (
 	accounts,
+	chain,
 	reverts,
 	ERC20,
 	PaymentTokenGovernor,
@@ -543,13 +544,15 @@ def test_payment_to_first_governor_and_switch_governor(PaymentToken, NewPaymentT
 	assert PaymentToken.balanceOf(fdt_instance) == 5000
 
 	# Change payment token governor
-	PaymentTokenGovernorProxyContract.set_payment_token_governor(NewPaymentTokenGovernorContract, {'from': accounts[0]})
+	PaymentTokenGovernorProxyContract.commit_change_payment_token_governor(NewPaymentTokenGovernorContract, {'from': accounts[0]})
+	chain.sleep(259200)
+	PaymentTokenGovernorProxyContract.apply_change_payment_token_governor({'from': accounts[0]})
 
-	assert PaymentTokenGovernorProxyContract.check_payment_token_acceptance(PaymentToken) == False
-	assert PaymentTokenGovernorProxyContract.check_payment_token_acceptance(NewPaymentToken) == True
-	assert PaymentTokenGovernorProxyContract.acceptedPaymentTokenCount() == 1
-	assert PaymentTokenGovernorProxyContract.acceptedPaymentTokens(1) == NewPaymentToken
-	assert PaymentTokenGovernorProxyContract.acceptedPaymentTokens(2) == ZERO_ADDRESS
+	assert PaymentTokenGovernorProxyContract.get_payment_token_acceptance(PaymentToken) == False
+	assert PaymentTokenGovernorProxyContract.get_payment_token_acceptance(NewPaymentToken) == True
+	assert PaymentTokenGovernorProxyContract.get_accepted_payment_token_count() == 1
+	assert PaymentTokenGovernorProxyContract.get_accepted_payment_tokens(1) == NewPaymentToken
+	assert PaymentTokenGovernorProxyContract.get_accepted_payment_tokens(2) == ZERO_ADDRESS
 
 	# Make payment in 2nd payment token
 

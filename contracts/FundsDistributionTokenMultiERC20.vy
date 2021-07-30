@@ -9,16 +9,13 @@ from vyper.interfaces import ERC20
 implements: ERC20
 
 interface PaymentTokenGovernorProxy:
-	def paymentTokenGovernorAddress() -> address: view
+	def payment_token_governor_address() -> address: view
 
-interface PaymentTokenGovernor:
-	def check_payment_token_acceptance(
+	def get_payment_token_acceptance(
 		_paymentTokenAddress: address
 	) -> bool: view
 
-	def acceptedPaymentTokenCount() -> uint256: view
-
-	def acceptedPaymentTokens(
+	def get_accepted_payment_tokens(
 		_index: uint256
 	) -> address: view
 
@@ -143,9 +140,7 @@ def _transfer(_to: address, _from: address, _value: uint256):
 
 	for i in range(1, 11):
 
-		_paymentTokenGovernorAddress: address = self.paymentTokenGovernorProxy.paymentTokenGovernorAddress()
-
-		_currentPaymentTokenAddress: address = PaymentTokenGovernor(_paymentTokenGovernorAddress).acceptedPaymentTokens(i)
+		_currentPaymentTokenAddress: address = self.paymentTokenGovernorProxy.get_accepted_payment_tokens(i)
 
 		if _currentPaymentTokenAddress == ZERO_ADDRESS:
 			break
@@ -303,8 +298,7 @@ def _withdrawFunds(_to: address):
 
 	for i in range(1, 11):
 
-		_paymentTokenGovernorAddress: address = self.paymentTokenGovernorProxy.paymentTokenGovernorAddress()
-		_currentPaymentTokenAddress: address = PaymentTokenGovernor(_paymentTokenGovernorAddress).acceptedPaymentTokens(i)
+		_currentPaymentTokenAddress: address = self.paymentTokenGovernorProxy.get_accepted_payment_tokens(i)
 
 		if _currentPaymentTokenAddress == ZERO_ADDRESS:
 			break
@@ -326,8 +320,8 @@ def withdrawFunds():
 def updateFundsTokenBalance():
 
 	for i in range(1, 11):
-		_paymentTokenGovernorAddress: address = self.paymentTokenGovernorProxy.paymentTokenGovernorAddress()
-		_currentPaymentTokenAddress: address = PaymentTokenGovernor(_paymentTokenGovernorAddress).acceptedPaymentTokens(i)
+
+		_currentPaymentTokenAddress: address = self.paymentTokenGovernorProxy.get_accepted_payment_tokens(i)
 
 		if _currentPaymentTokenAddress == ZERO_ADDRESS:
 			break
@@ -351,8 +345,8 @@ def withdrawnFundsOf(_receiver: address, _paymentTokenAddress: address) -> uint2
 @external
 @payable
 def payToContract(_amount: uint256, _paymentTokenAddress: address) -> bool:
-	_paymentTokenGovernorAddress: address = self.paymentTokenGovernorProxy.paymentTokenGovernorAddress()
-	assert PaymentTokenGovernor(_paymentTokenGovernorAddress).check_payment_token_acceptance(_paymentTokenAddress) == True, "Token not accepted for payment"
+
+	assert self.paymentTokenGovernorProxy.get_payment_token_acceptance(_paymentTokenAddress) == True, "Token not accepted for payment"
 
 	assert ERC20(_paymentTokenAddress).allowance(msg.sender, self) >= _amount
 	ERC20(_paymentTokenAddress).transferFrom(msg.sender, self, _amount)
