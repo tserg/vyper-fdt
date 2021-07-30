@@ -81,3 +81,28 @@ def test_commit_and_apply_new_beneficiary(FeeGovernorContract, FeeGovernorProxyC
 	assert FeeGovernorContract.beneficiary() == accounts[1]
 
 	assert FeeGovernorProxyContract.get_beneficiary() == accounts[1]
+
+def test_change_payment_token_governor(
+	FeeGovernorProxyContract,
+	FeeGovernorContract,
+	NewFeeGovernorContract,
+	accounts
+):
+	assert FeeGovernorProxyContract.get_admin_fee() == 1e8
+
+	tx1 = FeeGovernorProxyContract.commit_change_fee_governor(NewFeeGovernorContract, {'from': accounts[0]})
+
+	assert tx1.events['NewFeeGovernorCommitted']['newGovernor'] == NewFeeGovernorContract
+
+	assert FeeGovernorProxyContract.get_admin_fee() == 1e8
+
+	with reverts():
+		tx1 = FeeGovernorProxyContract.apply_change_fee_governor({'from': accounts[0]})
+
+	chain.sleep(259200)
+
+	tx2 = FeeGovernorProxyContract.apply_change_fee_governor({'from': accounts[0]})
+
+	assert tx2.events['FeeGovernorUpdated']['newGovernor'] == NewFeeGovernorContract
+	assert tx2.events['FeeGovernorUpdated']['oldGovernor'] == FeeGovernorContract
+	assert FeeGovernorProxyContract.get_admin_fee() == 3e8

@@ -1,10 +1,6 @@
 # @version ^0.2.0
 
 interface FeeGovernor:
-	def check_payment_token_acceptance(
-		_paymentTokenAddress: address
-	) -> bool: view
-
 	def admin_fee() -> uint256: view
 
 	def future_admin_fee() -> uint256: view
@@ -13,13 +9,23 @@ interface FeeGovernor:
 
 	def future_beneficiary() -> address: view
 
+event NewFeeGovernorCommitted:
+	newGovernor: indexed(address)
+
 event FeeGovernorUpdated:
 	oldGovernor: indexed(address)
 	newGovernor: indexed(address)
 
+ADMIN_ACTIONS_DELAY: constant(uint256) = 3 * 86400
+
 fee_governor_address: public(address)
+future_fee_governor_address: public(address)
+
 current_fee_governor: FeeGovernor
 admin: address
+
+# @dev Admin action deadline
+admin_change_fee_governor_deadline: uint256
 
 @external
 def __init__(_fee_governor_address: address):
@@ -28,19 +34,45 @@ def __init__(_fee_governor_address: address):
 	self.current_fee_governor = FeeGovernor(_fee_governor_address)
 
 @external
-def set_fee_governor(_address: address):
+def commit_change_fee_governor(_address: address):
 	"""
-	@notice Set the payment token governor address for FDT contracts
-	@param _address Address of the payment token governer
+	@notice Set the fee governor address for FDT contracts
+	@param _address Address of the fee governer
 	"""
 	# Check that caller is admin
 	assert msg.sender == self.admin
+	assert self.future_fee_governor_address == ZERO_ADDRESS
+	assert self.admin_change_fee_governor_deadline == 0
+
 	_previous_fee_governor__address: address = self.fee_governor_address
 
-	self.fee_governor_address = _address
-	self.current_fee_governor = FeeGovernor(_address)
+	_deadline: uint256 = block.timestamp + ADMIN_ACTIONS_DELAY
 
-	log FeeGovernorUpdated(_previous_fee_governor__address, _address)
+	self.future_fee_governor_address = _address
+	self.admin_change_fee_governor_deadline = _deadline
+
+	self.future_fee_governor_address = _address
+
+
+	log NewFeeGovernorCommitted(_address)
+
+@external
+def apply_change_fee_governor():
+	"""
+	@notice Change to the future fee governor address for FDT contracts
+	"""
+	# Check that caller is admin
+	assert msg.sender == self.admin
+	assert block.timestamp >= self.admin_change_fee_governor_deadline
+
+	_previous_fee_governor_address: address = self.fee_governor_address
+
+	self.fee_governor_address = self.future_fee_governor_address
+	self.current_fee_governor = FeeGovernor(self.fee_governor_address)
+	self.future_fee_governor_address = ZERO_ADDRESS
+	self.admin_change_fee_governor_deadline = 0
+
+	log FeeGovernorUpdated(_previous_fee_governor_address, self.fee_governor_address)
 
 @external
 @view
