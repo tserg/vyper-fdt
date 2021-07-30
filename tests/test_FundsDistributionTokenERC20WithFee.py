@@ -4,6 +4,7 @@ from brownie import (
 	accounts,
 	ERC20,
 	FeeGovernor,
+	FeeGovernorProxy,
 	FundsDistributionTokenERC20WithFee,
 	FundsDistributionTokenERC20WithFeeFactory,
 )
@@ -36,12 +37,16 @@ def FeeGovernorContract(FeeGovernor, accounts):
 	yield FeeGovernor.deploy(1e8, {'from': accounts[0]})
 
 @pytest.fixture(scope="module")
+def FeeGovernorProxyContract(FeeGovernorContract, FeeGovernorProxy, accounts):
+	yield FeeGovernorProxy.deploy(FeeGovernorContract, {'from': accounts[0]})
+
+@pytest.fixture(scope="module")
 def FDTERC20Contract(FundsDistributionTokenERC20WithFee, accounts):
 	yield FundsDistributionTokenERC20WithFee.deploy({'from': accounts[0]})
 
 @pytest.fixture(scope="module")
-def FDTERC20FactoryContract(PaymentToken, FDTERC20Contract, FundsDistributionTokenERC20WithFeeFactory, FeeGovernorContract, accounts):
-	yield FundsDistributionTokenERC20WithFeeFactory.deploy(FundsDistributionTokenERC20WithFee[0].address, accounts[0], PaymentToken.address, FeeGovernorContract.address, {'from': accounts[0]})
+def FDTERC20FactoryContract(PaymentToken, FDTERC20Contract, FundsDistributionTokenERC20WithFeeFactory, FeeGovernorProxyContract, accounts):
+	yield FundsDistributionTokenERC20WithFeeFactory.deploy(FundsDistributionTokenERC20WithFee[0].address, accounts[0], PaymentToken.address, FeeGovernorProxyContract.address, {'from': accounts[0]})
 
 @pytest.fixture(scope="module", autouse=True)
 def test_deploy_fdt_from_factory(FDTERC20FactoryContract, PaymentToken, accounts):

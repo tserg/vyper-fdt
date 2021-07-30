@@ -9,6 +9,8 @@ interface FeeGovernor:
 
 	def future_beneficiary() -> address: view
 
+	def fee_denominator() -> uint256: view
+
 event NewFeeGovernorCommitted:
 	newGovernor: indexed(address)
 
@@ -109,3 +111,12 @@ def get_future_beneficiary() -> address:
 	@return Address of future beneficiary
 	"""
 	return self.current_fee_governor.future_beneficiary()
+
+@external
+@view
+def get_fee_denominator() -> uint256:
+	"""
+	@notice Get fee denominator of current fee governor
+	@return Fee denominator for calculation of admin fees
+	"""
+	return self.current_fee_governor.fee_denominator()

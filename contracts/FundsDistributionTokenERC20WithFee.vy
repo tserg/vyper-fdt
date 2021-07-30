@@ -8,12 +8,12 @@ from vyper.interfaces import ERC20
 
 implements: ERC20
 
-interface FeeGovernor:
-	def fee_denominator() -> uint256: view
+interface FeeGovernorProxy:
+	def get_fee_denominator() -> uint256: view
 
-	def admin_fee() -> uint256: view
+	def get_admin_fee() -> uint256: view
 
-	def beneficiary() -> address: view
+	def get_beneficiary() -> address: view
 
 event Transfer:
     sender: indexed(address)
@@ -66,8 +66,8 @@ withdrawnAdminFeeTokenBalance: uint256
 # @dev paymentTokenInstance
 paymentToken: ERC20
 
-# @dev FeeGovernor instance
-feeGovernor: FeeGovernor
+# @dev FeeGovernorProxy instance
+feeGovernorProxy: FeeGovernorProxy
 
 # ERC20 functions
 
@@ -85,7 +85,7 @@ def initialize(
 	_supply: uint256,
 	_ownerAddress: address,
 	_paymentTokenAddress: address,
-	_feeGovernor: address
+	_feeGovernorProxy: address
 ) -> bool:
 	"""
 	@notice Initialize the contract
@@ -103,7 +103,7 @@ def initialize(
 	self.total_supply = _supply
 	self.fundsTokenBalance = 0
 	self.paymentToken = ERC20(_paymentTokenAddress)
-	self.feeGovernor = FeeGovernor(_feeGovernor)
+	self.feeGovernorProxy = FeeGovernorProxy(_feeGovernorProxy)
 	log Transfer(ZERO_ADDRESS, _ownerAddress, _supply)
 
 	return True
@@ -242,8 +242,8 @@ def _distributeFunds(_triggerer: address, _value: uint256):
 	assert self.total_supply > 0
 
 	if _value > 0:
-		_feeDenominator: uint256 = self.feeGovernor.fee_denominator()
-		_adminFee: uint256 = self.feeGovernor.admin_fee()
+		_feeDenominator: uint256 = self.feeGovernorProxy.get_fee_denominator()
+		_adminFee: uint256 = self.feeGovernorProxy.get_admin_fee()
 		_currentAdminFee: uint256 = _value * _adminFee / _feeDenominator
 		self.adminFeeTokenBalance += _currentAdminFee
 
@@ -306,7 +306,7 @@ def withdrawAdminFee():
 	self.adminFeeTokenBalance = 0
 	self.withdrawnAdminFeeTokenBalance += _undistributedAdminFee
 
-	_beneficiary: address = self.feeGovernor.beneficiary()
+	_beneficiary: address = self.feeGovernorProxy.get_beneficiary()
 	self.paymentToken.transfer(_beneficiary, _undistributedAdminFee)
 	log AdminFeeWithdrawn(_beneficiary, _undistributedAdminFee)
 
