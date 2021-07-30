@@ -1,7 +1,7 @@
 # @version ^0.2.0
 
 interface PaymentTokenGovernor:
-	def check_payment_token_acceptance(
+	def get_payment_token_acceptance(
 		_paymentTokenAddress: address
 	) -> bool: view
 
@@ -46,12 +46,12 @@ def set_payment_token_governor(_address: address):
 
 @external
 @view
-def check_payment_token_acceptance(_paymentTokenAddress: address) -> bool:
+def get_payment_token_acceptance(_paymentTokenAddress: address) -> bool:
 	"""
 	@dev Function to check if payment token is accepted by current PaymentTokenGovernor
 	@return Boolean value indicating True if payment token is accepted. Otherwise, False.
 	"""
-	return self.current_payment_token_governor.check_payment_token_acceptance(_paymentTokenAddress)
+	return self.current_payment_token_governor.get_payment_token_acceptance(_paymentTokenAddress)
 
 @external
 @view

@@ -138,7 +138,7 @@ def apply_remove_payment_token():
 
 @view
 @external
-def check_payment_token_acceptance(_payment_token: address) -> bool:
+def get_payment_token_acceptance(_payment_token: address) -> bool:
 	"""
 	@dev Function to check if payment token is accepted
 	@return Boolean value indicating True if payment token is accepted. Otherwise, False.

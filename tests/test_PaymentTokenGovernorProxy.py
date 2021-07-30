@@ -60,7 +60,7 @@ def test_add_payment_token_to_first_governor(PaymentTokenGovernorProxyContract, 
 	assert PaymentTokenGovernorProxyContract.get_accepted_payment_token_count() == 1
 	assert PaymentTokenGovernorProxyContract.get_accepted_payment_tokens(1) == PaymentToken.address
 	assert PaymentTokenGovernorProxyContract.get_payment_token_to_index(PaymentToken.address) == 1
-	assert PaymentTokenGovernorProxyContract.check_payment_token_acceptance(PaymentToken.address) == True
+	assert PaymentTokenGovernorProxyContract.get_payment_token_acceptance(PaymentToken.address) == True
 
 
 def test_add_two_payment_tokens_to_first_governor(PaymentTokenGovernorProxyContract, PaymentTokenGovernorContract, PaymentToken, NewPaymentToken, accounts):
@@ -75,7 +75,7 @@ def test_add_two_payment_tokens_to_first_governor(PaymentTokenGovernorProxyContr
 	assert PaymentTokenGovernorProxyContract.get_accepted_payment_token_count() == 1
 	assert PaymentTokenGovernorProxyContract.get_accepted_payment_tokens(1) == PaymentToken.address
 	assert PaymentTokenGovernorProxyContract.get_payment_token_to_index(PaymentToken.address) == 1
-	assert PaymentTokenGovernorProxyContract.check_payment_token_acceptance(PaymentToken.address) == True
+	assert PaymentTokenGovernorProxyContract.get_payment_token_acceptance(PaymentToken.address) == True
 
 	tx2 = PaymentTokenGovernorContract.add_payment_token(NewPaymentToken.address, {'from': accounts[0]})
 
@@ -87,7 +87,7 @@ def test_add_two_payment_tokens_to_first_governor(PaymentTokenGovernorProxyContr
 	assert PaymentTokenGovernorProxyContract.get_accepted_payment_token_count() == 2
 	assert PaymentTokenGovernorProxyContract.get_accepted_payment_tokens(2) == NewPaymentToken.address
 	assert PaymentTokenGovernorProxyContract.get_payment_token_to_index(NewPaymentToken.address) == 2
-	assert PaymentTokenGovernorProxyContract.check_payment_token_acceptance(NewPaymentToken.address) == True
+	assert PaymentTokenGovernorProxyContract.get_payment_token_acceptance(NewPaymentToken.address) == True
 
 
 def test_add_two_and_remove_one_payment_token(PaymentTokenGovernorProxyContract, PaymentTokenGovernorContract, PaymentToken, NewPaymentToken, accounts):
@@ -102,7 +102,7 @@ def test_add_two_and_remove_one_payment_token(PaymentTokenGovernorProxyContract,
 	assert PaymentTokenGovernorProxyContract.get_accepted_payment_token_count() == 1
 	assert PaymentTokenGovernorProxyContract.get_accepted_payment_tokens(1) == PaymentToken.address
 	assert PaymentTokenGovernorProxyContract.get_payment_token_to_index(PaymentToken.address) == 1
-	assert PaymentTokenGovernorProxyContract.check_payment_token_acceptance(PaymentToken.address) == True
+	assert PaymentTokenGovernorProxyContract.get_payment_token_acceptance(PaymentToken.address) == True
 
 	tx2 = PaymentTokenGovernorContract.add_payment_token(NewPaymentToken.address, {'from': accounts[0]})
 
@@ -114,7 +114,7 @@ def test_add_two_and_remove_one_payment_token(PaymentTokenGovernorProxyContract,
 	assert PaymentTokenGovernorProxyContract.get_accepted_payment_token_count() == 2
 	assert PaymentTokenGovernorProxyContract.get_accepted_payment_tokens(2) == NewPaymentToken.address
 	assert PaymentTokenGovernorProxyContract.get_payment_token_to_index(NewPaymentToken.address) == 2
-	assert PaymentTokenGovernorProxyContract.check_payment_token_acceptance(NewPaymentToken.address) == True
+	assert PaymentTokenGovernorProxyContract.get_payment_token_acceptance(NewPaymentToken.address) == True
 
 	tx3 = PaymentTokenGovernorContract.commit_remove_payment_token(PaymentToken.address, {'from': accounts[0]})
 	chain.sleep(259200)
@@ -130,5 +130,5 @@ def test_add_two_and_remove_one_payment_token(PaymentTokenGovernorProxyContract,
 	assert PaymentTokenGovernorProxyContract.get_accepted_payment_tokens(1) == NewPaymentToken.address
 	assert PaymentTokenGovernorProxyContract.get_accepted_payment_tokens(2) == ZERO_ADDRESS
 	assert PaymentTokenGovernorProxyContract.get_payment_token_to_index(NewPaymentToken.address) == 1
-	assert PaymentTokenGovernorProxyContract.check_payment_token_acceptance(NewPaymentToken.address) == True
-	assert PaymentTokenGovernorProxyContract.check_payment_token_acceptance(PaymentToken.address) == False
+	assert PaymentTokenGovernorProxyContract.get_payment_token_acceptance(NewPaymentToken.address) == True
+	assert PaymentTokenGovernorProxyContract.get_payment_token_acceptance(PaymentToken.address) == False
