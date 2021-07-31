@@ -47,27 +47,27 @@ funds_id_to_address: public(HashMap[uint256, address])
 payment_token_address: public(address)
 
 # @dev Address of FeeGovernorProxy
-fee_governor_address: public(address)
+fee_governor_proxy_address: public(address)
 
 @external
 def __init__(
 	_target: address,
 	_admin: address,
 	_payment_token_address: address,
-	_fee_governor_address: address
+	_fee_governor_proxy_address: address
 ):
 	"""
 	@notice Constructor
 	@param _target 'FundsDistributionTokenERC20WithFee' contract address
 	@param _admin Address of admin
 	@param _payment_token_address Address of payment token
-	@param _fee_governor_address Address of FeeGovernor
+	@param _fee_governor_proxy_address Address of FeeGovernorProxy
 	"""
 	self.target = _target
 	self.admin = _admin
 	self.funds_id = 0
 	self.payment_token_address = _payment_token_address
-	self.fee_governor_address = _fee_governor_address
+	self.fee_governor_proxy_address = _fee_governor_proxy_address
 
 @external
 def deploy_fdt_contract(
@@ -94,7 +94,7 @@ def deploy_fdt_contract(
 		_supply,
 		msg.sender,
 		self.payment_token_address,
-		self.fee_governor_address
+		self.fee_governor_proxy_address
 	)
 	self.funds_id += 1
 	self.funds_id_to_address[self.funds_id] = _contract

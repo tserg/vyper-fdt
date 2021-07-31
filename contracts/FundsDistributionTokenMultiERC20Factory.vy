@@ -28,20 +28,31 @@ event PaymentTokenUpdated:
 
 admin: public(address)
 target: public(address)
-fundsId: public(uint256)
-fundsIdToAddress: public(HashMap[uint256, address])
-paymentTokenGovernorProxyAddress: public(address)
+
+# @dev Count of deployed FundsDistributionTokenERC20WithFee instances
+funds_id: public(uint256)
+
+# @dev Mapping of fund ID to address of deployed FundsDistributionTokenERC20WithFee instance
+funds_id_to_address: public(HashMap[uint256, address])
+
+# @dev Address of payment token
+payment_token_address: public(address)
+
+# @dev Address of PaymentTokenGovernorProxy contract
+payment_token_governor_proxy_address: public(address)
 
 @external
-def __init__(_target: address, _admin: address, _paymentTokenGovernorProxyAddress: address):
+def __init__(_target: address, _admin: address, _payment_token_governor_proxy_address: address):
 	"""
 	@notice Constructor
 	@param _target 'FundsDistributionToken' contract address
+	@param _admin Address of admin
+	@param _payment_token_governor_proxy_address Address of PaymentTokenGovernorProxy
 	"""
 	self.target = _target
 	self.admin = _admin
-	self.fundsId = 0
-	self.paymentTokenGovernorProxyAddress = _paymentTokenGovernorProxyAddress
+	self.funds_id = 0
+	self.payment_token_governor_proxy_address = _payment_token_governor_proxy_address
 
 @external
 def deploy_fdt_contract(
@@ -67,9 +78,9 @@ def deploy_fdt_contract(
 		_decimals,
 		_supply,
 		msg.sender,
-		self.paymentTokenGovernorProxyAddress
+		self.payment_token_governor_proxy_address
 	)
-	self.fundsId += 1
-	self.fundsIdToAddress[self.fundsId] = _contract
-	log FundsDistributionTokenCreated(self.fundsId, _contract, _name, _symbol)
+	self.funds_id += 1
+	self.funds_id_to_address[self.funds_id] = _contract
+	log FundsDistributionTokenCreated(self.funds_id, _contract, _name, _symbol)
 	return _contract
