@@ -20,10 +20,16 @@ event FeeGovernorUpdated:
 
 ADMIN_ACTIONS_DELAY: constant(uint256) = 3 * 86400
 
+# @dev Address of current FeeGovernor
 fee_governor_address: public(address)
+
+# @dev Address of committed future FeeGovernor
 future_fee_governor_address: public(address)
 
+# @dev FeeGovernor instance at current FeeGovernor address
 current_fee_governor: FeeGovernor
+
+# @dev Address of admin
 admin: address
 
 # @dev Admin action deadline
@@ -31,6 +37,10 @@ admin_change_fee_governor_deadline: uint256
 
 @external
 def __init__(_fee_governor_address: address):
+	"""
+	@notice Constructor
+	@param _fee_governor_address 'FeeGovernor' contract address
+	"""
 	self.fee_governor_address = _fee_governor_address
 	self.admin = msg.sender
 	self.current_fee_governor = FeeGovernor(_fee_governor_address)

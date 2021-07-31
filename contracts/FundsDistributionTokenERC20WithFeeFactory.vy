@@ -31,29 +31,43 @@ event FeeGovernorUpdated:
 	previousFeeGovernor: address
 	newFeeGovernor: address
 
+# @dev Address of admin
 admin: public(address)
+
+# @dev Address of FundsDistributionTokenERC20WithFee contract
 target: public(address)
-fundsId: public(uint256)
-fundsIdToAddress: public(HashMap[uint256, address])
-paymentTokenAddress: public(address)
-feeGovernorAddress: public(address)
+
+# @dev Count of deployed FundsDistributionTokenERC20WithFee instances
+funds_id: public(uint256)
+
+# @dev Mapping of fund ID to address of deployed FundsDistributionTokenERC20WithFee instance
+funds_id_to_address: public(HashMap[uint256, address])
+
+# @dev Address of payment token
+payment_token_address: public(address)
+
+# @dev Address of FeeGovernorProxy
+fee_governor_address: public(address)
 
 @external
 def __init__(
 	_target: address,
 	_admin: address,
-	_paymentTokenAddress: address,
-	_feeGovernorAddress: address
+	_payment_token_address: address,
+	_fee_governor_address: address
 ):
 	"""
 	@notice Constructor
-	@param _target 'FundsDistributionToken' contract address
+	@param _target 'FundsDistributionTokenERC20WithFee' contract address
+	@param _admin Address of admin
+	@param _payment_token_address Address of payment token
+	@param _fee_governor_address Address of FeeGovernor
 	"""
 	self.target = _target
 	self.admin = _admin
-	self.fundsId = 0
-	self.paymentTokenAddress = _paymentTokenAddress
-	self.feeGovernorAddress = _feeGovernorAddress
+	self.funds_id = 0
+	self.payment_token_address = _payment_token_address
+	self.fee_governor_address = _fee_governor_address
 
 @external
 def deploy_fdt_contract(
@@ -79,38 +93,10 @@ def deploy_fdt_contract(
 		_decimals,
 		_supply,
 		msg.sender,
-		self.paymentTokenAddress,
-		self.feeGovernorAddress
+		self.payment_token_address,
+		self.fee_governor_address
 	)
-	self.fundsId += 1
-	self.fundsIdToAddress[self.fundsId] = _contract
-	log FundsDistributionTokenCreated(self.fundsId, _contract, _name, _symbol)
+	self.funds_id += 1
+	self.funds_id_to_address[self.funds_id] = _contract
+	log FundsDistributionTokenCreated(self.funds_id, _contract, _name, _symbol)
 	return _contract
-
-@external
-def set_payment_token(_token: address):
-	"""
-	@notice Set the payment token address for FDT contracts
-	@param _token Address of the payment token
-	"""
-	# Check that caller is admin
-	assert msg.sender == self.admin
-	_previousPaymentTokenAddress: address = self.paymentTokenAddress
-
-	self.paymentTokenAddress = _token
-
-	log PaymentTokenUpdated(_previousPaymentTokenAddress, _token)
-
-@external
-def set_fee_governor(_governor: address):
-	"""
-	@notice Set the Fee Governor contract address
-	@param _governor Address of the Fee Governor contract
-	"""
-	# Check that caller is admin
-	assert msg.sender == self.admin
-	_previousFeeGovernorAddress: address = self.feeGovernorAddress
-
-	self.feeGovernorAddress = _governor
-
-	log FeeGovernorUpdated(_previousFeeGovernorAddress, _governor)
