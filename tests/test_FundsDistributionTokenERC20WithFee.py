@@ -76,7 +76,7 @@ def test_same_IO(PaymentToken, accounts):
 	tx1_1 = PaymentToken.approve(fdt_instance, 500e18, {'from': accounts[0]})
 	tx1_2 = fdt_instance.payToContract(500e18, {'from': accounts[0]})
 
-	assert PaymentToken.balanceOf(FundsDistributionTokenERC20WithFee[1]) == 500e18
+	assert PaymentToken.balanceOf(fdt_instance) == 500e18
 
 	account_balance = PaymentToken.balanceOf(accounts[0])
 

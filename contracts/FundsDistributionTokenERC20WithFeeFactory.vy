@@ -23,14 +23,6 @@ event FundsDistributionTokenCreated:
 	name: String[64]
 	symbol: String[32]
 
-event PaymentTokenUpdated:
-	previousPaymentToken: address
-	newPaymentToken: address
-
-event FeeGovernorUpdated:
-	previousFeeGovernor: address
-	newFeeGovernor: address
-
 # @dev Address of admin
 admin: public(address)
 
