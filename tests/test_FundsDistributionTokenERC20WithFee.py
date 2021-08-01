@@ -267,7 +267,7 @@ def test_multiple_deposit_with_intervening_transfer_two_withdrawals(PaymentToken
 	assert account1_withdrawa1.events['FundsWithdrawn']['value'] == 594e18
 	assert PaymentToken.balanceOf(fdt_instance) == 406e18
 	assert PaymentToken.balanceOf(accounts[0]) == account1_balance1 + 594e18
-	assert fdt_instance.adminFeeTokenBalance() == 10e18
+	assert fdt_instance.payment_token_to_admin_fee_balance() == 10e18
 
 	payment2_1 = PaymentToken.approve(fdt_instance, 1000e18, {'from': accounts[1]})
 	payment2_1 = fdt_instance.payToContract(1000e18, {'from': accounts[1]})
@@ -280,7 +280,7 @@ def test_multiple_deposit_with_intervening_transfer_two_withdrawals(PaymentToken
 	update_tx = fdt_instance.updateFundsTokenBalance({'from': accounts[0]})
 	assert update_tx.events['FundsDistributed']['receiver'] == accounts[0]
 	assert update_tx.events['FundsDistributed']['value'] == 1000e18
-	assert fdt_instance.adminFeeTokenBalance() == 20e18
+	assert fdt_instance.payment_token_to_admin_fee_balance() == 20e18
 
 	account2_withdrawa1 = fdt_instance.withdrawFunds({'from': accounts[1]})
 

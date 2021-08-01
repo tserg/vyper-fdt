@@ -58,16 +58,16 @@ allowances: HashMap[address, HashMap[address, uint256]]
 total_supply: uint256
 
 fundsTokenBalance: uint256
-adminFeeTokenBalance: public(uint256)
+payment_token_to_admin_fee_balance: public(uint256)
 
 # @dev Cumulative balance of admin fees withdrawn
-withdrawnAdminFeeTokenBalance: uint256
+payment_token_to_cumulative_withdrawn_admin_fee: uint256
 
 # @dev paymentTokenInstance
 paymentToken: ERC20
 
 # @dev FeeGovernorProxy instance
-feeGovernorProxy: FeeGovernorProxy
+fee_governor_proxy: FeeGovernorProxy
 
 # ERC20 functions
 
@@ -85,7 +85,7 @@ def initialize(
 	_supply: uint256,
 	_ownerAddress: address,
 	_paymentTokenAddress: address,
-	_feeGovernorProxy: address
+	_fee_governor_proxy: address
 ) -> bool:
 	"""
 	@notice Initialize the contract
@@ -103,7 +103,7 @@ def initialize(
 	self.total_supply = _supply
 	self.fundsTokenBalance = 0
 	self.paymentToken = ERC20(_paymentTokenAddress)
-	self.feeGovernorProxy = FeeGovernorProxy(_feeGovernorProxy)
+	self.fee_governor_proxy = FeeGovernorProxy(_fee_governor_proxy)
 	log Transfer(ZERO_ADDRESS, _ownerAddress, _supply)
 
 	return True
@@ -242,10 +242,10 @@ def _distributeFunds(_triggerer: address, _value: uint256):
 	assert self.total_supply > 0
 
 	if _value > 0:
-		_feeDenominator: uint256 = self.feeGovernorProxy.get_fee_denominator()
-		_adminFee: uint256 = self.feeGovernorProxy.get_admin_fee()
+		_feeDenominator: uint256 = self.fee_governor_proxy.get_fee_denominator()
+		_adminFee: uint256 = self.fee_governor_proxy.get_admin_fee()
 		_currentAdminFee: uint256 = _value * _adminFee / _feeDenominator
-		self.adminFeeTokenBalance += _currentAdminFee
+		self.payment_token_to_admin_fee_balance += _currentAdminFee
 
 		self.pointsPerShare += (_value - _currentAdminFee) / self.total_supply
 		log FundsDistributed(_triggerer, _value)
@@ -302,11 +302,11 @@ def withdrawAdminFee():
 	"""
 	@dev Withdraws admin fee to given beneficiary address
 	"""
-	_undistributedAdminFee: uint256 = self.adminFeeTokenBalance
-	self.adminFeeTokenBalance = 0
-	self.withdrawnAdminFeeTokenBalance += _undistributedAdminFee
+	_undistributedAdminFee: uint256 = self.payment_token_to_admin_fee_balance
+	self.payment_token_to_admin_fee_balance = 0
+	self.payment_token_to_cumulative_withdrawn_admin_fee += _undistributedAdminFee
 
-	_beneficiary: address = self.feeGovernorProxy.get_beneficiary()
+	_beneficiary: address = self.fee_governor_proxy.get_beneficiary()
 	self.paymentToken.transfer(_beneficiary, _undistributedAdminFee)
 	log AdminFeeWithdrawn(_beneficiary, _undistributedAdminFee)
 

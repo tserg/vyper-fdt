@@ -281,13 +281,11 @@ def _updateFundsTokenBalance(_paymentTokenAddress: address) -> uint256:
 @internal
 def _prepareWithdraw(_receiver: address, _paymentTokenAddress: address) -> uint256:
 
-    _withdrawableDividend: uint256 = self._withdrawableFundsOf(_receiver, _paymentTokenAddress)
+	_withdrawableDividend: uint256 = self._withdrawableFundsOf(_receiver, _paymentTokenAddress)
+	self.withdrawnFunds[_paymentTokenAddress][_receiver] = self.withdrawnFunds[_paymentTokenAddress][_receiver] + _withdrawableDividend
 
-    self.withdrawnFunds[_paymentTokenAddress][_receiver] = self.withdrawnFunds[_paymentTokenAddress][_receiver] + _withdrawableDividend
-
-    log FundsWithdrawn(_receiver, _paymentTokenAddress, _withdrawableDividend)
-
-    return _withdrawableDividend
+	log FundsWithdrawn(_receiver, _paymentTokenAddress, _withdrawableDividend)
+	return _withdrawableDividend
 
 @internal
 def _withdrawFunds(_to: address):
