@@ -10,6 +10,10 @@ In this implementation, FDT is capped at 100 with 0 decimal places. Each FDT the
 
 By minting the FDTs at token creation, we can mint a number of FDTs to a rentseeker's wallet address.
 
+Extensions:
+- A payment token governor contract can be added to accept payment for up to 10 different ERC-20 tokens. Tokens can be added without restrictions, and removed subject to a commit and apply design pattern with 3 days lead time, adapted from Curve Finance's contracts. A proxy contract can also be used for upgradeability of the payment token governor contract (e.g. increasing the number of payment tokens).
+- A fee governor contract can be added to implement an admin fee that can be withdrawn to a beneficiary address. Changing the beneficiary is subject to a commit and apply design pattern with 3 days lead time, adapted from Curve Finance's contracts. A proxy contract can also be used for upgradeability of the fee governor contract..
+
 This is a further modification of https://github.com/tserg/funds-distribution-token-custom where the FDT contract is deployed using a factory contract.
 
 ## Getting Started
