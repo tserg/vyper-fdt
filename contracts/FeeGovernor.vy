@@ -67,7 +67,6 @@ def commit_new_admin_fee(_new_admin_fee: uint256):
 	"""
 	assert msg.sender == self.admin
 	assert _new_admin_fee <= MAX_ADMIN_FEE
-	assert self.admin_fee_action_deadline == 0
 	assert _new_admin_fee != self.admin_fee
 
 	deadline: uint256 = block.timestamp + ADMIN_ACTIONS_DELAY
@@ -82,6 +81,7 @@ def apply_new_admin_fee():
 	@notice Apply new admin fee
 	"""
 	assert msg.sender == self.admin
+	assert self.admin_fee_action_deadline != 0
 	assert block.timestamp >= self.admin_fee_action_deadline
 
 	self.admin_fee_action_deadline = 0

@@ -48,8 +48,7 @@ def commit_change_payment_token_governor(_address: address):
 	"""
 	# Check that caller is admin
 	assert msg.sender == self.admin
-	assert self.future_payment_token_governor_address == ZERO_ADDRESS
-	assert self.admin_change_payment_token_governor_deadline == 0
+	assert _address != ZERO_ADDRESS
 
 	_deadline: uint256 = block.timestamp + ADMIN_ACTIONS_DELAY
 
@@ -65,6 +64,8 @@ def apply_change_payment_token_governor():
 	"""
 	# Check that caller is admin
 	assert msg.sender == self.admin
+	assert self.future_payment_token_governor_address != ZERO_ADDRESS
+	assert self.admin_change_payment_token_governor_deadline != 0
 	assert block.timestamp >= self.admin_change_payment_token_governor_deadline
 
 	_previous_payment_token_governor_address: address = self.payment_token_governor_address

@@ -53,8 +53,7 @@ def commit_change_fee_governor(_address: address):
 	"""
 	# Check that caller is admin
 	assert msg.sender == self.admin
-	assert self.future_fee_governor_address == ZERO_ADDRESS
-	assert self.admin_change_fee_governor_deadline == 0
+	assert _address != ZERO_ADDRESS
 
 	_previous_fee_governor__address: address = self.fee_governor_address
 
@@ -75,6 +74,8 @@ def apply_change_fee_governor():
 	"""
 	# Check that caller is admin
 	assert msg.sender == self.admin
+	assert self.future_fee_governor_address != ZERO_ADDRESS
+	assert self.admin_change_fee_governor_deadline != 0
 	assert block.timestamp >= self.admin_change_fee_governor_deadline
 
 	_previous_fee_governor_address: address = self.fee_governor_address
