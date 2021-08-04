@@ -1,8 +1,7 @@
 # @version ^0.2.0
 
-# @dev Implementation of ERC-20 token standard.
-# @author Takayuki Jimba (@yudetamago)
-# https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
+# @dev Modification of ERC-20 token standard and ERC-2222.
+# @author GT @tserg
 
 from vyper.interfaces import ERC20
 

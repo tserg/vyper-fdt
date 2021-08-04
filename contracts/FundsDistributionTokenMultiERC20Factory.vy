@@ -3,7 +3,7 @@
 """
 @title Funds Distribution Token Factory
 @author Gary Tse
-@notice Factory to deploy 'FundsDistributionTokens' contracts
+@notice Factory to deploy 'FundsDistributionTokenMultiERC20' contracts
 """
 
 interface FundsDistributionToken:
