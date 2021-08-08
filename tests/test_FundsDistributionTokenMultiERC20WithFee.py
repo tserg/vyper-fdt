@@ -296,10 +296,6 @@ def test_different_IO_single_deposit_with_token_transfer(PaymentToken, accounts)
 
 	account1_withdraw = fdt_instance.withdrawFunds({'from': accounts[0]})
 
-
-	assert account1_withdraw.events['FundsWithdrawn']['receiver'] == accounts[0]
-	assert account1_withdraw.events['FundsWithdrawn']['paymentToken'] == PaymentToken
-	assert account1_withdraw.events['FundsWithdrawn']['value'] == 0
 	assert PaymentToken.balanceOf(fdt_instance) == 500e18
 	assert PaymentToken.balanceOf(accounts[0]) == account1_balance
 
@@ -454,33 +450,36 @@ def test_same_IO_two_payment_tokens(PaymentToken, NewPaymentToken, PaymentTokenG
 
 	assert PaymentToken.balanceOf(fdt_instance) == 500e18
 
+	account_payment_token_balance = PaymentToken.balanceOf(accounts[0])
+
+	withdraw_1 = fdt_instance.withdrawFunds({'from': accounts[0]})
+
+	assert withdraw_1.events['FundsDistributed']['receiver'] == accounts[0]
+	assert withdraw_1.events['FundsDistributed']['paymentToken'] == PaymentToken
+	assert withdraw_1.events['FundsDistributed']['value'] == 500e18
+	assert fdt_instance.payment_token_to_admin_fee_balance(PaymentToken) == 5e18
+
+	assert withdraw_1.events['FundsWithdrawn']['receiver'] == accounts[0]
+	assert withdraw_1.events['FundsWithdrawn']['paymentToken'] == PaymentToken
+	assert withdraw_1.events['FundsWithdrawn']['value'] == 495e18
+
 	PaymentTokenGovernorContract.add_payment_token(NewPaymentToken, {'from': accounts[0]})
 	tx1_3 = NewPaymentToken.approve(fdt_instance, 1000e18, {'from': accounts[0]})
 	tx1_4 = fdt_instance.payToContract(1000e18, NewPaymentToken, {'from': accounts[0]})
 
 
-	account_payment_token_balance = PaymentToken.balanceOf(accounts[0])
 	account1_new_payment_token_balance = NewPaymentToken.balanceOf(accounts[0])
 
 	tx2 = fdt_instance.withdrawFunds({'from': accounts[0]})
 
-	assert len(tx2.events['FundsDistributed']) == 2
-	assert tx2.events['FundsDistributed'][0]['receiver'] == accounts[0]
-	assert tx2.events['FundsDistributed'][0]['paymentToken'] == PaymentToken
-	assert tx2.events['FundsDistributed'][0]['value'] == 500e18
-	assert fdt_instance.payment_token_to_admin_fee_balance(PaymentToken) == 5e18
-	assert tx2.events['FundsDistributed'][1]['receiver'] == accounts[0]
-	assert tx2.events['FundsDistributed'][1]['paymentToken'] == NewPaymentToken
-	assert tx2.events['FundsDistributed'][1]['value'] == 1000e18
+	assert tx2.events['FundsDistributed']['receiver'] == accounts[0]
+	assert tx2.events['FundsDistributed']['paymentToken'] == NewPaymentToken
+	assert tx2.events['FundsDistributed']['value'] == 1000e18
 	assert fdt_instance.payment_token_to_admin_fee_balance(NewPaymentToken) == 10e18
 
-	assert len(tx2.events['FundsWithdrawn']) == 2
-	assert tx2.events['FundsWithdrawn'][0]['receiver'] == accounts[0]
-	assert tx2.events['FundsWithdrawn'][0]['paymentToken'] == PaymentToken
-	assert tx2.events['FundsWithdrawn'][0]['value'] == 495e18
-	assert tx2.events['FundsWithdrawn'][1]['receiver'] == accounts[0]
-	assert tx2.events['FundsWithdrawn'][1]['paymentToken'] == NewPaymentToken
-	assert tx2.events['FundsWithdrawn'][1]['value'] == 990e18
+	assert tx2.events['FundsWithdrawn']['receiver'] == accounts[0]
+	assert tx2.events['FundsWithdrawn']['paymentToken'] == NewPaymentToken
+	assert tx2.events['FundsWithdrawn']['value'] == 990e18
 
 	assert PaymentToken.balanceOf(fdt_instance) == 5e18
 	assert PaymentToken.balanceOf(accounts[0]) == account_payment_token_balance + 495e18

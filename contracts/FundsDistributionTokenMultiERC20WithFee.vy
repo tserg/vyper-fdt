@@ -11,7 +11,7 @@ interface PaymentTokenGovernorProxy:
 	def payment_token_governor_address() -> address: view
 
 	def get_payment_token_acceptance(
-		_paymentTokenAddress: address
+		_payment_token_address: address
 	) -> bool: view
 
 	def get_accepted_payment_tokens(
@@ -265,16 +265,16 @@ def burnFrom(_to: address, _value: uint256):
 
 @view
 @internal
-def _accumulativeFundsOf(_receiver: address, _paymentTokenAddress: address) -> int128:
-    return convert((self.pointsPerShare[_paymentTokenAddress] * self.balanceOf[_receiver]), int128) + self.pointsCorrection[_paymentTokenAddress][_receiver]
+def _accumulativeFundsOf(_receiver: address, _payment_token_address: address) -> int128:
+    return convert((self.pointsPerShare[_payment_token_address] * self.balanceOf[_receiver]), int128) + self.pointsCorrection[_payment_token_address][_receiver]
 
 @view
 @internal
-def _withdrawableFundsOf(_receiver: address, _paymentTokenAddress: address) -> uint256:
-    return convert(self._accumulativeFundsOf(_receiver, _paymentTokenAddress), uint256) - self.withdrawnFunds[_paymentTokenAddress][_receiver]
+def _withdrawableFundsOf(_receiver: address, _payment_token_address: address) -> uint256:
+    return convert(self._accumulativeFundsOf(_receiver, _payment_token_address), uint256) - self.withdrawnFunds[_payment_token_address][_receiver]
 
 @internal
-def _distributeFunds(_triggerer: address, _paymentTokenAddress: address, _value: uint256):
+def _distributeFunds(_triggerer: address, _payment_token_address: address, _value: uint256):
 	"""
 	@dev Distribute funds which have not been distributed
 	@param _value The amount that will be distributed
@@ -285,35 +285,55 @@ def _distributeFunds(_triggerer: address, _paymentTokenAddress: address, _value:
 		_fee_denominator: uint256 = self.fee_governor_proxy.get_fee_denominator()
 		_admin_fee: uint256 = self.fee_governor_proxy.get_admin_fee()
 		_current_admin_fee: uint256 = _value * _admin_fee / _fee_denominator
-		self.payment_token_to_admin_fee_balance[_paymentTokenAddress] += _current_admin_fee
-		self.pointsPerShare[_paymentTokenAddress] += (_value - _current_admin_fee) / self.total_supply
-		log FundsDistributed(_triggerer, _paymentTokenAddress, _value)
+		self.payment_token_to_admin_fee_balance[_payment_token_address] += _current_admin_fee
+		self.pointsPerShare[_payment_token_address] += (_value - _current_admin_fee) / self.total_supply
+		log FundsDistributed(_triggerer, _payment_token_address, _value)
 
 @internal
-def _updateFundsTokenBalance(_paymentTokenAddress: address) -> uint256:
+def _update_payment_token_balance(_payment_token_address: address):
+	"""
+	@dev Update self.payment_token_to_balance by calling balanceOf() function of payment token
+	@param _payment_token_address Address of payment token
+	"""
+	_current_balance: uint256 = ERC20(_payment_token_address).balanceOf(self)
+	self.payment_token_to_balance[_payment_token_address] = _current_balance
 
-    _prevfundsTokenBalance: uint256 = self.payment_token_to_balance[_paymentTokenAddress]
+@internal
+def _check_undistributed_payment_token_balance(_payment_token_address: address) -> uint256:
+	"""
+	@dev Check if a payment token has any undistributed balances
+	@param _payment_token_address Address of payment token
+	@return An uint256 specifying the amount undistributed for the specified payment token
+	"""
+	_prevfundsTokenBalance: uint256 = self.payment_token_to_balance[_payment_token_address]
+	self._update_payment_token_balance(_payment_token_address)
 
-    self.payment_token_to_balance[_paymentTokenAddress] = ERC20(_paymentTokenAddress).balanceOf(self)
-
-    if _prevfundsTokenBalance > self.payment_token_to_balance[_paymentTokenAddress]:
-        return _prevfundsTokenBalance - self.payment_token_to_balance[_paymentTokenAddress]
-    elif self.payment_token_to_balance[_paymentTokenAddress] > _prevfundsTokenBalance:
-        return self.payment_token_to_balance[_paymentTokenAddress] - _prevfundsTokenBalance
-    else:
+	if _prevfundsTokenBalance > self.payment_token_to_balance[_payment_token_address]:
+        return _prevfundsTokenBalance - self.payment_token_to_balance[_payment_token_address]
+	elif self.payment_token_to_balance[_payment_token_address] > _prevfundsTokenBalance:
+        return self.payment_token_to_balance[_payment_token_address] - _prevfundsTokenBalance
+	else:
         return 0
 
 
 @internal
-def _prepareWithdraw(_receiver: address, _paymentTokenAddress: address) -> uint256:
+def _prepareWithdraw(_receiver: address, _payment_token_address: address) -> uint256:
+	"""
+	@dev Withdraw distributed but unclaimed payment token to a valid address
+	@param _receiver Address of valid token holder claiming funds
+	@param _payment_token_address Address of payment token
+	@return An uint256 specifying the amount withdrawn for the specified payment token
+	"""
+	_withdrawableDividend: uint256 = self._withdrawableFundsOf(_receiver, _payment_token_address)
 
-    _withdrawableDividend: uint256 = self._withdrawableFundsOf(_receiver, _paymentTokenAddress)
+	if _withdrawableDividend > 0:
 
-    self.withdrawnFunds[_paymentTokenAddress][_receiver] = self.withdrawnFunds[_paymentTokenAddress][_receiver] + _withdrawableDividend
+		self.withdrawnFunds[_payment_token_address][_receiver] = self.withdrawnFunds[_payment_token_address][_receiver] + _withdrawableDividend
+		self.payment_token_to_balance[_payment_token_address] -= _withdrawableDividend
 
-    log FundsWithdrawn(_receiver, _paymentTokenAddress, _withdrawableDividend)
+		log FundsWithdrawn(_receiver, _payment_token_address, _withdrawableDividend)
 
-    return _withdrawableDividend
+	return _withdrawableDividend
 
 @internal
 def _withdrawFunds(_to: address):
@@ -329,22 +349,27 @@ def _withdrawFunds(_to: address):
 		if _currentPaymentTokenAddress == ZERO_ADDRESS:
 			break
 
-		_newFunds: uint256 = self._updateFundsTokenBalance(_currentPaymentTokenAddress)
+		_newFunds: uint256 = self._check_undistributed_payment_token_balance(_currentPaymentTokenAddress)
 
 		if _newFunds > 0:
 	        self._distributeFunds(_to, _currentPaymentTokenAddress, _newFunds)
 
 		_withdrawableFunds: uint256 = self._prepareWithdraw(_to, _currentPaymentTokenAddress)
 		ERC20(_currentPaymentTokenAddress).transfer(_to, _withdrawableFunds)
-		self._updateFundsTokenBalance(_currentPaymentTokenAddress)
+		self._check_undistributed_payment_token_balance(_currentPaymentTokenAddress)
 
 @external
 def withdrawFunds():
+	"""
+	@dev Withdraw distributed but unclaimed funds to msg.sender
+	"""
 	self._withdrawFunds(msg.sender)
 
 @external
 def updateFundsTokenBalance():
-
+	"""
+	@dev Check if there are undistributed funds, and distributes if so.
+	"""
 	for i in range(1, 11):
 
 		_currentPaymentTokenAddress: address = self.payment_token_governor_proxy.get_accepted_payment_tokens(i)
@@ -352,7 +377,7 @@ def updateFundsTokenBalance():
 		if _currentPaymentTokenAddress == ZERO_ADDRESS:
 			break
 
-		_newFunds: uint256 = self._updateFundsTokenBalance(_currentPaymentTokenAddress)
+		_newFunds: uint256 = self._check_undistributed_payment_token_balance(_currentPaymentTokenAddress)
 
 		if _newFunds > 0:
 			self._distributeFunds(msg.sender, _currentPaymentTokenAddress, _newFunds)
@@ -375,6 +400,7 @@ def withdrawAdminFee():
 			continue
 
 		self.payment_token_to_admin_fee_balance[_currentPaymentTokenAddress] = 0
+		self.payment_token_to_balance[_currentPaymentTokenAddress] -= _undistributed_admin_fee
 		self.payment_token_to_cumulative_withdrawn_admin_fee[_currentPaymentTokenAddress] += _undistributed_admin_fee
 
 		_beneficiary: address = self.fee_governor_proxy.get_beneficiary()
@@ -384,24 +410,40 @@ def withdrawAdminFee():
 
 @view
 @external
-def withdrawableFundsOf(_receiver: address, _paymentTokenAddress: address) -> uint256:
-
-    return self._withdrawableFundsOf(_receiver, _paymentTokenAddress)
+def withdrawableFundsOf(_receiver: address, _payment_token_address: address) -> uint256:
+	"""
+	@dev Check for distributed but unclaimed funds
+	@param _receiver Address to check
+	@param _payment_token_address Address of payment token to check
+	@return An uint256 specifying the amount withdrawable for the specified payment token
+	"""
+	return self._withdrawableFundsOf(_receiver, _payment_token_address)
 
 @view
 @external
-def withdrawnFundsOf(_receiver: address, _paymentTokenAddress: address) -> uint256:
-    return self.withdrawnFunds[_paymentTokenAddress][_receiver]
+def withdrawnFundsOf(_receiver: address, _payment_token_address: address) -> uint256:
+	"""
+	@dev Check for claimed funds
+	@param _receiver Address to check
+	@param _payment_token_address Address of payment token to check
+	@return An uint256 specifying the amount claimed by _address for the specified payment token
+	"""
+	return self.withdrawnFunds[_payment_token_address][_receiver]
 
 @external
 @payable
-def payToContract(_amount: uint256, _paymentTokenAddress: address) -> bool:
+def payToContract(_amount: uint256, _payment_token_address: address) -> bool:
+	"""
+	@dev Transfer an amount of the specified payment token to this contract
+	@param _amount Amount of payment token to transfer
+	@param _payment_token_address Address of payment token
+	@return A bool specifying whether the transfer was successful
+	"""
+	assert self.payment_token_governor_proxy.get_payment_token_acceptance(_payment_token_address) == True, "Token not accepted for payment"
 
-	assert self.payment_token_governor_proxy.get_payment_token_acceptance(_paymentTokenAddress) == True, "Token not accepted for payment"
-
-	assert ERC20(_paymentTokenAddress).allowance(msg.sender, self) >= _amount
-	ERC20(_paymentTokenAddress).transferFrom(msg.sender, self, _amount)
-	log FundsDeposited(msg.sender, _paymentTokenAddress, _amount)
+	assert ERC20(_payment_token_address).allowance(msg.sender, self) >= _amount
+	ERC20(_payment_token_address).transferFrom(msg.sender, self, _amount)
+	log FundsDeposited(msg.sender, _payment_token_address, _amount)
 
 	return True
 
@@ -412,5 +454,9 @@ def __default__():
 
 @external
 @view
-def getPointsPerShare(_paymentTokenAddress: address) -> uint256:
-    return self.pointsPerShare[_paymentTokenAddress]
+def getPointsPerShare(_payment_token_address: address) -> uint256:
+	"""
+	@dev Check for the amount of the specified payment token each FDT is entitled to cumulatively
+	@return An uint256 specifying the amoutn of payment token each FDT is entitled to cumulatively
+	"""
+	return self.pointsPerShare[_payment_token_address]
