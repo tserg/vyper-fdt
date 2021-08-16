@@ -22,33 +22,29 @@ def FDTFactoryContract(FDTContract, FundsDistributionTokenFactory, accounts):
 	yield FundsDistributionTokenFactory.deploy(FundsDistributionToken[0].address, accounts[0], {'from': accounts[0]})
 
 @pytest.fixture(scope="module", autouse=True)
-def test_deploy_fdt_from_factory(FDTFactoryContract, accounts):
+def fdt_instance(FDTFactoryContract, FundsDistributionToken, accounts):
 
 	tx1 = FDTFactoryContract.deploy_fdt_contract(TOKEN_NAME, TOKEN_SYMBOL, TOKEN_DECIMALS, TOKEN_SUPPLY, {'from': accounts[0]})
 
-	global FDT_INSTANCE
-	FDT_INSTANCE = tx1.new_contracts[0]
-	
+	yield FundsDistributionToken.at(tx1.new_contracts[0])
+
 @pytest.fixture(autouse=True)
 def isolation(fn_isolation):
 	pass
 
-def test_initial_state(FDTContract, accounts):
+def test_initial_state(fdt_instance, accounts):
 
-	fdt_instance = FundsDistributionToken.at(FDT_INSTANCE)
+	assert fdt_instance.balanceOf(accounts[0]) == 100
+	assert fdt_instance.balanceOf(accounts[1]) == 0
 
-	assert FundsDistributionToken[1].balanceOf(accounts[0]) == 100
-	assert FundsDistributionToken[1].balanceOf(accounts[1]) == 0
-
-def test_same_IO(FDTContract, accounts):
+def test_same_IO(fdt_instance, accounts):
 
 	"""
 		Address with 100 tokens pays to contract, and withdraws
 	"""
-	fdt_instance = FundsDistributionToken.at(FDT_INSTANCE)
-	tx1 = accounts[0].transfer(FundsDistributionToken[1], '1 ether')
+	tx1 = accounts[0].transfer(fdt_instance, '1 ether')
 
-	assert FundsDistributionToken[1].balance() == 1e18
+	assert fdt_instance.balance() == 1e18
 
 	account_balance = accounts[0].balance()
 
@@ -57,16 +53,15 @@ def test_same_IO(FDTContract, accounts):
 	assert len(tx2.events) == 2
 	assert tx2.events['FundsDistributed']['receiver'] == accounts[0]
 	assert tx2.events['FundsWithdrawn']['receiver'] == accounts[0]
-	assert FundsDistributionToken[1].balance() == 0
+	assert fdt_instance.balance() == 0
 	assert accounts[0].balance() == account_balance + 1e18
 
 
-def test_different_IO_single_deposit(FDTContract, accounts):
+def test_different_IO_single_deposit(fdt_instance, accounts):
 
 	"""
 		Non-token holding address pays to contract, address with 100 tokens withdraws
 	"""
-	fdt_instance = FundsDistributionToken.at(FDT_INSTANCE)
 	tx1 = accounts[1].transfer(fdt_instance, '1 ether')
 
 	assert fdt_instance.balance() == 1e18
@@ -82,12 +77,11 @@ def test_different_IO_single_deposit(FDTContract, accounts):
 	assert accounts[0].balance() == account_balance + 1e18
 
 
-def test_two_token_holders_single_deposit(FDTContract, accounts):
+def test_two_token_holders_single_deposit(fdt_instance, accounts):
 
 	"""
 		Two address with 50 tokens each, withdraws
 	"""
-	fdt_instance = FundsDistributionToken.at(FDT_INSTANCE)
 	tx1 = fdt_instance.transfer(accounts[1], 50, {'from': accounts[0]})
 
 	assert len(tx1.events) == 1
@@ -116,11 +110,10 @@ def test_two_token_holders_single_deposit(FDTContract, accounts):
 	assert accounts[1].balance() == account_balance + 5e17
 
 
-def test_three_token_holders_single_deposit(FDTContract, accounts):
+def test_three_token_holders_single_deposit(fdt_instance, accounts):
 	"""
 		Single payer, three addresses withdraws
 	"""
-	fdt_instance = FundsDistributionToken.at(FDT_INSTANCE)
 	tx1_1 = fdt_instance.transfer(accounts[1], 25, {'from': accounts[0]})
 	tx1_2 = fdt_instance.transfer(accounts[2], 35, {'from': accounts[0]})
 	tx2 = accounts[1].transfer(fdt_instance, '1 ether', )
@@ -156,13 +149,12 @@ def test_three_token_holders_single_deposit(FDTContract, accounts):
 	assert accounts[2].balance() == account3_balance + 0.35e18
 
 
-def test_different_IO_single_deposit_with_token_transfer(FDTContract, accounts):
+def test_different_IO_single_deposit_with_token_transfer(fdt_instance, accounts):
 
 	"""
 		Token holding 100 tokens pays to contract, transfers all tokens to another address.
 		Both withdraws.
 	"""
-	fdt_instance = FundsDistributionToken.at(FDT_INSTANCE)
 	tx1 = accounts[1].transfer(fdt_instance, '1 ether')
 
 	assert fdt_instance.balance() == 1e18
@@ -189,7 +181,7 @@ def test_different_IO_single_deposit_with_token_transfer(FDTContract, accounts):
 	assert fdt_instance.balance() == 0
 	assert accounts[1].balance() == account2_balance + 1e18
 
-def test_multiple_deposit_with_intervening_transfer_two_withdrawals(FDTContract, accounts):
+def test_multiple_deposit_with_intervening_transfer_two_withdrawals(fdt_instance, accounts):
 	"""
 		Two addresses holding tokens.
 		One deposit is made.
@@ -197,7 +189,6 @@ def test_multiple_deposit_with_intervening_transfer_two_withdrawals(FDTContract,
 		Another deposit is made.
 		Both addresses withdraw.
 	"""
-	fdt_instance = FundsDistributionToken.at(FDT_INSTANCE)
 	FDT_transfer = fdt_instance.transfer(accounts[1], 40, {'from': accounts[0]})
 
 	assert len(FDT_transfer.events) == 1
@@ -236,10 +227,10 @@ def test_multiple_deposit_with_intervening_transfer_two_withdrawals(FDTContract,
 	assert len(account1_withdraw2.events) == 1
 	assert account1_withdraw2.events['FundsWithdrawn']['receiver'] == accounts[0]
 	assert account1_withdraw2.events['FundsWithdrawn']['value'] == 1.2e18
-	assert FDTContract.balance() == 0
+	assert fdt_instance.balance() == 0
 	assert accounts[0].balance () == account1_balance2 + 1.2e18
 
-def test_multiple_deposit_lower_value_with_intervening_transfer_two_withdrawals(FDTContract, accounts):
+def test_multiple_deposit_lower_value_with_intervening_transfer_two_withdrawals(fdt_instance, accounts):
 	"""
 		Two addresses holding tokens.
 		One deposit is made.
@@ -247,7 +238,6 @@ def test_multiple_deposit_lower_value_with_intervening_transfer_two_withdrawals(
 		Another deposit is made that results in contract balance < first deposit.
 		Both addresses withdraw.
 	"""
-	fdt_instance = FundsDistributionToken.at(FDT_INSTANCE)
 	FDT_transfer = fdt_instance.transfer(accounts[1], 40, {'from': accounts[0]})
 
 	assert len(FDT_transfer.events) == 1

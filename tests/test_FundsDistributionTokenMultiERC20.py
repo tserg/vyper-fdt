@@ -57,12 +57,11 @@ def FDTMultiERC20FactoryContract(PaymentTokenGovernorProxyContract, FDTMultiERC2
 	yield FundsDistributionTokenMultiERC20Factory.deploy(FundsDistributionTokenMultiERC20[0].address, accounts[0], PaymentTokenGovernorProxyContract.address, {'from': accounts[0]})
 
 @pytest.fixture(scope="module", autouse=True)
-def test_deploy_fdt_from_factory(FDTMultiERC20FactoryContract, accounts):
+def fdt_instance(FDTMultiERC20FactoryContract, FundsDistributionTokenMultiERC20, accounts):
 
 	tx1 = FDTMultiERC20FactoryContract.deploy_fdt_contract(TOKEN_NAME, TOKEN_SYMBOL, TOKEN_DECIMALS, TOKEN_SUPPLY, {'from': accounts[0]})
 
-	global FDT_INSTANCE
-	FDT_INSTANCE = tx1.new_contracts[0]
+	yield FundsDistributionTokenMultiERC20.at(tx1.new_contracts[0])
 
 @pytest.fixture(scope="module", autouse=True)
 def add_payment_token_to_first_governor(PaymentTokenGovernorContract, PaymentToken, accounts):
@@ -78,30 +77,26 @@ def add_new_payment_token_to_second_governor(NewPaymentTokenGovernorContract, Ne
 def isolation(fn_isolation):
 	pass
 
-def test_initial_state(accounts):
-
-	fdt_instance = FundsDistributionTokenMultiERC20.at(FDT_INSTANCE)
+def test_initial_state(fdt_instance, accounts):
 
 	assert fdt_instance.balanceOf(accounts[0]) == 100
 	assert fdt_instance.balanceOf(accounts[1]) == 0
 
-def test_unregistered_payment_token(NewPaymentToken, accounts):
+def test_unregistered_payment_token(NewPaymentToken, fdt_instance, accounts):
 	"""
 	Address pays with unregistered payment token
 	"""
-	fdt_instance = FundsDistributionTokenMultiERC20.at(FDT_INSTANCE)
 	tx1_1 = NewPaymentToken.approve(fdt_instance, 500, {'from': accounts[0]})
 
 	with reverts():
 		tx1_2 = fdt_instance.payToContract(500, NewPaymentToken, {'from': accounts[0]})
 
-def test_same_IO(PaymentToken, PaymentTokenGovernorContract, accounts):
+def test_same_IO(PaymentToken, PaymentTokenGovernorContract, fdt_instance, accounts):
 
 	"""
 		Address with 100 tokens pays to contract, and withdraws
 	"""
 
-	fdt_instance = FundsDistributionTokenMultiERC20.at(FDT_INSTANCE)
 	tx1_1 = PaymentToken.approve(fdt_instance, 500, {'from': accounts[0]})
 
 	tx1_2 = fdt_instance.payToContract(500, PaymentToken, {'from': accounts[0]})
@@ -119,12 +114,11 @@ def test_same_IO(PaymentToken, PaymentTokenGovernorContract, accounts):
 	assert PaymentToken.balanceOf(fdt_instance) == 0
 	assert PaymentToken.balanceOf(accounts[0]) == account_balance + 500
 
-def test_different_IO_single_deposit(PaymentToken, accounts):
+def test_different_IO_single_deposit(PaymentToken, fdt_instance, accounts):
 
 	"""
 		Non-token holding address pays to contract, address with 100 tokens withdraws
 	"""
-	fdt_instance = FundsDistributionTokenMultiERC20.at(FDT_INSTANCE)
 	tx0 = PaymentToken.transfer(accounts[1], 500, {'from': accounts[0]})
 	tx1_1 = PaymentToken.approve(fdt_instance, 500, {'from': accounts[1]})
 	tx1_2 = fdt_instance.payToContract(500, PaymentToken, {'from': accounts[1]})
@@ -143,12 +137,11 @@ def test_different_IO_single_deposit(PaymentToken, accounts):
 	assert PaymentToken.balanceOf(accounts[0]) == account_balance + 500
 
 
-def test_two_token_holders_single_deposit(PaymentToken, accounts):
+def test_two_token_holders_single_deposit(PaymentToken, fdt_instance, accounts):
 
 	"""
 		Two address with 50 tokens each, withdraws
 	"""
-	fdt_instance = FundsDistributionTokenMultiERC20.at(FDT_INSTANCE)
 	tx1 = fdt_instance.transfer(accounts[1], 50, {'from': accounts[0]})
 
 	tx2_1 = PaymentToken.transfer(accounts[1], 500, {'from': accounts[0]})
@@ -177,11 +170,10 @@ def test_two_token_holders_single_deposit(PaymentToken, accounts):
 	assert PaymentToken.balanceOf(fdt_instance) == 0
 	assert PaymentToken.balanceOf(accounts[1]) == account_balance + 250
 
-def test_three_token_holders_single_deposit(PaymentToken, accounts):
+def test_three_token_holders_single_deposit(PaymentToken, fdt_instance, accounts):
 	"""
 		Single payer, three addresses withdraws
 	"""
-	fdt_instance = FundsDistributionTokenMultiERC20.at(FDT_INSTANCE)
 	tx1_1 = fdt_instance.transfer(accounts[1], 25, {'from': accounts[0]})
 	tx1_2 = fdt_instance.transfer(accounts[2], 35, {'from': accounts[0]})
 
@@ -220,13 +212,12 @@ def test_three_token_holders_single_deposit(PaymentToken, accounts):
 	assert PaymentToken.balanceOf(fdt_instance) == 0
 	assert PaymentToken.balanceOf(accounts[2]) == account3_balance + 175
 
-def test_different_IO_single_deposit_with_token_transfer(PaymentToken, accounts):
+def test_different_IO_single_deposit_with_token_transfer(PaymentToken, fdt_instance, accounts):
 
 	"""
 		Account holding 100 tokens pays to contract, transfers all tokens to another address.
 		Both withdraws.
 	"""
-	fdt_instance = FundsDistributionTokenMultiERC20.at(FDT_INSTANCE)
 	tx1_2 = PaymentToken.approve(fdt_instance, 500, {'from': accounts[0]})
 	tx1_3 = fdt_instance.payToContract(500, PaymentToken, {'from': accounts[0]})
 
@@ -258,7 +249,7 @@ def test_different_IO_single_deposit_with_token_transfer(PaymentToken, accounts)
 	assert PaymentToken.balanceOf(fdt_instance) == 0
 	assert PaymentToken.balanceOf(accounts[1]) == account2_balance + 500
 
-def test_multiple_deposit_with_intervening_transfer_two_withdrawals(PaymentToken, accounts):
+def test_multiple_deposit_with_intervening_transfer_two_withdrawals(PaymentToken, fdt_instance, accounts):
 	"""
 		Two addresses holding tokens.
 		One deposit is made.
@@ -266,7 +257,6 @@ def test_multiple_deposit_with_intervening_transfer_two_withdrawals(PaymentToken
 		Another deposit is made.
 		Both addresses withdraw.
 	"""
-	fdt_instance = FundsDistributionTokenMultiERC20.at(FDT_INSTANCE)
 	FDT_transfer = fdt_instance.transfer(accounts[1], 40, {'from': accounts[0]})
 
 	assert FDT_transfer.events['Transfer']['sender'] == accounts[0]
@@ -322,7 +312,7 @@ def test_multiple_deposit_with_intervening_transfer_two_withdrawals(PaymentToken
 	assert PaymentToken.balanceOf(fdt_instance) == 0
 	assert PaymentToken.balanceOf(accounts[0]) == account1_balance2 + 600
 
-def test_multiple_deposit_lower_value_with_intervening_transfer_two_withdrawals(PaymentToken, accounts):
+def test_multiple_deposit_lower_value_with_intervening_transfer_two_withdrawals(PaymentToken, fdt_instance, accounts):
 	"""
 		Two addresses holding tokens.
 		One deposit is made.
@@ -330,7 +320,6 @@ def test_multiple_deposit_lower_value_with_intervening_transfer_two_withdrawals(
 		Another deposit is made that results in contract balance < first deposit.
 		Both addresses withdraw.
 	"""
-	fdt_instance = FundsDistributionTokenMultiERC20.at(FDT_INSTANCE)
 	FDT_transfer = fdt_instance.transfer(accounts[1], 40, {'from': accounts[0]})
 
 	assert FDT_transfer.events['Transfer']['sender'] == accounts[0]
@@ -385,13 +374,12 @@ def test_multiple_deposit_lower_value_with_intervening_transfer_two_withdrawals(
 	assert PaymentToken.balanceOf(fdt_instance) == 0
 	assert PaymentToken.balanceOf(accounts[0]) == account1_balance2 + 600
 
-def test_same_IO_two_payment_tokens(PaymentToken, NewPaymentToken, PaymentTokenGovernorContract, accounts):
+def test_same_IO_two_payment_tokens(PaymentToken, NewPaymentToken, PaymentTokenGovernorContract, fdt_instance, accounts):
 
 	"""
 		Address with 100 tokens pays to contract, and withdraws
 	"""
 
-	fdt_instance = FundsDistributionTokenMultiERC20.at(FDT_INSTANCE)
 	tx1_1 = PaymentToken.approve(fdt_instance, 500, {'from': accounts[0]})
 
 	tx1_2 = fdt_instance.payToContract(500, PaymentToken, {'from': accounts[0]})
@@ -430,7 +418,7 @@ def test_same_IO_two_payment_tokens(PaymentToken, NewPaymentToken, PaymentTokenG
 	assert NewPaymentToken.balanceOf(fdt_instance) == 0
 	assert PaymentToken.balanceOf(accounts[0]) == account1_new_payment_token_balance + 1000
 
-def test_multiple_deposit_with_two_payment_tokens_and_intervening_transfer_two_withdrawals(PaymentToken, NewPaymentToken, PaymentTokenGovernorContract, accounts):
+def test_multiple_deposit_with_two_payment_tokens_and_intervening_transfer_two_withdrawals(PaymentToken, NewPaymentToken, PaymentTokenGovernorContract, fdt_instance, accounts):
 	"""
 		Two addresses holding tokens.
 		One deposit is made using Payment Token.
@@ -439,7 +427,6 @@ def test_multiple_deposit_with_two_payment_tokens_and_intervening_transfer_two_w
 		Another deposit is made using New Payment Token
 		Both addresses withdraw.
 	"""
-	fdt_instance = FundsDistributionTokenMultiERC20.at(FDT_INSTANCE)
 	FDT_transfer = fdt_instance.transfer(accounts[1], 40, {'from': accounts[0]})
 
 	assert FDT_transfer.events['Transfer']['sender'] == accounts[0]
@@ -521,7 +508,7 @@ def test_multiple_deposit_with_two_payment_tokens_and_intervening_transfer_two_w
 	assert NewPaymentToken.balanceOf(fdt_instance) == 0
 	assert NewPaymentToken.balanceOf(accounts[0]) == account1_new_payment_token_balance + 1200
 
-def test_payment_to_first_governor_and_switch_governor(PaymentToken, NewPaymentToken, PaymentTokenGovernorProxyContract, NewPaymentTokenGovernorContract, accounts):
+def test_payment_to_first_governor_and_switch_governor(PaymentToken, NewPaymentToken, PaymentTokenGovernorProxyContract, NewPaymentTokenGovernorContract, fdt_instance, accounts):
 	"""
 		One address holds 100 FDT.
 		One payment is made based on 1st payment token under 1st governor contract
@@ -530,7 +517,6 @@ def test_payment_to_first_governor_and_switch_governor(PaymentToken, NewPaymentT
 		Funds are distributed for 2nd payment token only
 	"""
 
-	fdt_instance = FundsDistributionTokenMultiERC20.at(FDT_INSTANCE)
 	FDT_transfer = fdt_instance.transfer(accounts[1], 40, {'from': accounts[0]})
 
 	assert FDT_transfer.events['Transfer']['sender'] == accounts[0]
