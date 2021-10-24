@@ -1,4 +1,4 @@
-# @version ^0.2.0
+# @version ^0.3.0
 
 # @dev Contract to add payment tokens for FundsDistributionTokenMultiERC20
 # @author Gary Tse (@tserg)
